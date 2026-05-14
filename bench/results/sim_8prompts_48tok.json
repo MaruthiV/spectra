@@ -1,0 +1,3656 @@
+{
+  "args": {
+    "target": "Qwen/Qwen2.5-1.5B-Instruct",
+    "draft": "Qwen/Qwen2.5-0.5B-Instruct",
+    "gamma": 4,
+    "temperature": 0.0,
+    "top_p": 1.0,
+    "max_tokens": 48,
+    "prompts": "bench/prompts/mt-bench-20.json",
+    "output": "bench/results/sim_8prompts_48tok.json",
+    "seed": 42,
+    "limit": 8,
+    "verbose": false
+  },
+  "traces": [
+    {
+      "prompt": "Compose an engaging travel blog post about a recent trip to Hawaii, highlighting cultural experiences and must-see attractions.",
+      "prompt_token_ids": [
+        70492,
+        458,
+        22570,
+        5821,
+        5010,
+        1736,
+        911,
+        264,
+        3213,
+        8411,
+        311,
+        27521,
+        11,
+        38586,
+        12752,
+        11449,
+        323,
+        1969,
+        12,
+        4060,
+        38491,
+        13
+      ],
+      "completion": " Use descriptive language and personal anecdotes to bring the reader along on the journey. Include tips for travelers and recommendations for local restaurants and activities. Hawaii is a dream destination for many travelers, and I recently had the opportunity to experience it firsthand. From",
+      "committed_token_ids": [
+        5443,
+        52844,
+        4128,
+        323,
+        4345,
+        92966,
+        311,
+        4446,
+        279,
+        6604,
+        3156,
+        389,
+        279,
+        11618,
+        13,
+        29734,
+        10414,
+        369,
+        39286,
+        323,
+        18564,
+        369,
+        2205,
+        15556,
+        323,
+        7488,
+        13,
+        27521,
+        374,
+        264,
+        7904,
+        9106,
+        369,
+        1657,
+        39286,
+        11,
+        323,
+        358,
+        5926,
+        1030,
+        279,
+        6638,
+        311,
+        3139,
+        432,
+        82568,
+        13,
+        5542
+      ],
+      "cumulative_acceptance": 0.4166666666666667,
+      "decode_ms": 23250.486999982968,
+      "prefill_ms": 8549.671582994051,
+      "tokens_per_second_decode": 2.064472886096328,
+      "steps": [
+        {
+          "round": 0,
+          "drafts_proposed": 4,
+          "drafts_accepted": 4,
+          "per_position_accept": [
+            true,
+            true,
+            true,
+            true
+          ],
+          "per_position_target_top": [
+            5443,
+            52844,
+            4128,
+            323
+          ],
+          "per_position_draft_top": [
+            5443,
+            52844,
+            4128,
+            323
+          ],
+          "bonus_token_id": 4345,
+          "latency_ms": 1009.9792089313269
+        },
+        {
+          "round": 1,
+          "drafts_proposed": 4,
+          "drafts_accepted": 2,
+          "per_position_accept": [
+            true,
+            true,
+            false
+          ],
+          "per_position_target_top": [
+            92966,
+            311,
+            4446
+          ],
+          "per_position_draft_top": [
+            92966,
+            311,
+            1281
+          ],
+          "bonus_token_id": 4446,
+          "latency_ms": 649.7490830952302
+        },
+        {
+          "round": 2,
+          "drafts_proposed": 4,
+          "drafts_accepted": 2,
+          "per_position_accept": [
+            true,
+            true,
+            false
+          ],
+          "per_position_target_top": [
+            279,
+            6604,
+            3156
+          ],
+          "per_position_draft_top": [
+            279,
+            6604,
+            594
+          ],
+          "bonus_token_id": 3156,
+          "latency_ms": 734.9027500022203
+        },
+        {
+          "round": 3,
+          "drafts_proposed": 4,
+          "drafts_accepted": 4,
+          "per_position_accept": [
+            true,
+            true,
+            true,
+            true
+          ],
+          "per_position_target_top": [
+            389,
+            279,
+            11618,
+            13
+          ],
+          "per_position_draft_top": [
+            389,
+            279,
+            11618,
+            13
+          ],
+          "bonus_token_id": 29734,
+          "latency_ms": 810.1828340440989
+        },
+        {
+          "round": 4,
+          "drafts_proposed": 4,
+          "drafts_accepted": 0,
+          "per_position_accept": [
+            false
+          ],
+          "per_position_target_top": [
+            10414
+          ],
+          "per_position_draft_top": [
+            518
+          ],
+          "bonus_token_id": 10414,
+          "latency_ms": 891.3319580024108
+        },
+        {
+          "round": 5,
+          "drafts_proposed": 4,
+          "drafts_accepted": 2,
+          "per_position_accept": [
+            true,
+            true,
+            false
+          ],
+          "per_position_target_top": [
+            369,
+            39286,
+            323
+          ],
+          "per_position_draft_top": [
+            369,
+            39286,
+            311
+          ],
+          "bonus_token_id": 323,
+          "latency_ms": 1108.726333011873
+        },
+        {
+          "round": 6,
+          "drafts_proposed": 4,
+          "drafts_accepted": 0,
+          "per_position_accept": [
+            false
+          ],
+          "per_position_target_top": [
+            18564
+          ],
+          "per_position_draft_top": [
+            18225
+          ],
+          "bonus_token_id": 18564,
+          "latency_ms": 909.9589580437168
+        },
+        {
+          "round": 7,
+          "drafts_proposed": 4,
+          "drafts_accepted": 1,
+          "per_position_accept": [
+            true,
+            false
+          ],
+          "per_position_target_top": [
+            369,
+            2205
+          ],
+          "per_position_draft_top": [
+            369,
+            1846
+          ],
+          "bonus_token_id": 2205,
+          "latency_ms": 867.063625017181
+        },
+        {
+          "round": 8,
+          "drafts_proposed": 4,
+          "drafts_accepted": 2,
+          "per_position_accept": [
+            true,
+            true,
+            false
+          ],
+          "per_position_target_top": [
+            15556,
+            323,
+            7488
+          ],
+          "per_position_draft_top": [
+            15556,
+            323,
+            54613
+          ],
+          "bonus_token_id": 7488,
+          "latency_ms": 3508.8149580406025
+        },
+        {
+          "round": 9,
+          "drafts_proposed": 4,
+          "drafts_accepted": 1,
+          "per_position_accept": [
+            true,
+            false
+          ],
+          "per_position_target_top": [
+            13,
+            27521
+          ],
+          "per_position_draft_top": [
+            13,
+            576
+          ],
+          "bonus_token_id": 27521,
+          "latency_ms": 2110.3914579143748
+        },
+        {
+          "round": 10,
+          "drafts_proposed": 4,
+          "drafts_accepted": 2,
+          "per_position_accept": [
+            true,
+            true,
+            false
+          ],
+          "per_position_target_top": [
+            374,
+            264,
+            7904
+          ],
+          "per_position_draft_top": [
+            374,
+            264,
+            23702
+          ],
+          "bonus_token_id": 7904,
+          "latency_ms": 966.3419160060585
+        },
+        {
+          "round": 11,
+          "drafts_proposed": 4,
+          "drafts_accepted": 2,
+          "per_position_accept": [
+            true,
+            true,
+            false
+          ],
+          "per_position_target_top": [
+            9106,
+            369,
+            1657
+          ],
+          "per_position_draft_top": [
+            9106,
+            369,
+            1846
+          ],
+          "bonus_token_id": 1657,
+          "latency_ms": 3232.7822499210015
+        },
+        {
+          "round": 12,
+          "drafts_proposed": 4,
+          "drafts_accepted": 0,
+          "per_position_accept": [
+            false
+          ],
+          "per_position_target_top": [
+            39286
+          ],
+          "per_position_draft_top": [
+            1251
+          ],
+          "bonus_token_id": 39286,
+          "latency_ms": 978.4432499436662
+        },
+        {
+          "round": 13,
+          "drafts_proposed": 4,
+          "drafts_accepted": 1,
+          "per_position_accept": [
+            true,
+            false
+          ],
+          "per_position_target_top": [
+            11,
+            323
+          ],
+          "per_position_draft_top": [
+            11,
+            10004
+          ],
+          "bonus_token_id": 323,
+          "latency_ms": 1034.8826249828562
+        },
+        {
+          "round": 14,
+          "drafts_proposed": 4,
+          "drafts_accepted": 0,
+          "per_position_accept": [
+            false
+          ],
+          "per_position_target_top": [
+            358
+          ],
+          "per_position_draft_top": [
+            419
+          ],
+          "bonus_token_id": 358,
+          "latency_ms": 982.6499168993905
+        },
+        {
+          "round": 15,
+          "drafts_proposed": 4,
+          "drafts_accepted": 0,
+          "per_position_accept": [
+            false
+          ],
+          "per_position_target_top": [
+            5926
+          ],
+          "per_position_draft_top": [
+            1030
+          ],
+          "bonus_token_id": 5926,
+          "latency_ms": 1145.3780410811305
+        },
+        {
+          "round": 16,
+          "drafts_proposed": 4,
+          "drafts_accepted": 4,
+          "per_position_accept": [
+            true,
+            true,
+            true,
+            true
+          ],
+          "per_position_target_top": [
+            1030,
+            279,
+            6638,
+            311
+          ],
+          "per_position_draft_top": [
+            1030,
+            279,
+            6638,
+            311
+          ],
+          "bonus_token_id": 3139,
+          "latency_ms": 1186.5234170109034
+        },
+        {
+          "round": 17,
+          "drafts_proposed": 4,
+          "drafts_accepted": 3,
+          "per_position_accept": [
+            true,
+            true,
+            true,
+            false
+          ],
+          "per_position_target_top": [
+            432,
+            82568,
+            13,
+            5542
+          ],
+          "per_position_draft_top": [
+            432,
+            82568,
+            13,
+            1634
+          ],
+          "bonus_token_id": 5542,
+          "latency_ms": 1122.009832994081
+        }
+      ]
+    },
+    {
+      "prompt": "Draft a professional email seeking your supervisor's feedback on the 'Quarterly Financial Report' you prepared. Ask specifically about the data analysis, presentation style, and the clarity of conclusions drawn. Keep the email short and to the point.",
+      "prompt_token_ids": [
+        50086,
+        264,
+        6584,
+        2551,
+        10887,
+        697,
+        37319,
+        594,
+        11055,
+        389,
+        279,
+        364,
+        86608,
+        398,
+        17503,
+        8259,
+        6,
+        498,
+        10030,
+        13,
+        20437,
+        11689,
+        911,
+        279,
+        821,
+        6358,
+        11,
+        15496,
+        1707,
+        11,
+        323,
+        279,
+        31273,
+        315,
+        30242,
+        14764,
+        13,
+        13655,
+        279,
+        2551,
+        2805,
+        323,
+        311,
+        279,
+        1459,
+        13
+      ],
+      "completion": " Subject: Request for Feedback on Quarterly Financial Report\n\nDear [Supervisor's Name],\n\nI hope this email finds you well. I am writing to request your feedback on the 'Quarterly Financial Report' I have prepared. I would greatly appreciate",
+      "committed_token_ids": [
+        17450,
+        25,
+        6145,
+        369,
+        36857,
+        389,
+        74383,
+        17503,
+        8259,
+        271,
+        30665,
+        508,
+        10048,
+        31396,
+        594,
+        3988,
+        49088,
+        40,
+        3900,
+        419,
+        2551,
+        13719,
+        498,
+        1632,
+        13,
+        358,
+        1079,
+        4378,
+        311,
+        1681,
+        697,
+        11055,
+        389,
+        279,
+        364,
+        86608,
+        398,
+        17503,
+        8259,
+        6,
+        358,
+        614,
+        10030,
+        13,
+        358,
+        1035,
+        18875,
+        15401,
+        697
+      ],
+      "cumulative_acceptance": 0.625,
+      "decode_ms": 24137.651333003305,
+      "prefill_ms": 512.2183749917895,
+      "tokens_per_second_decode": 2.030023523167,
+      "steps": [
+        {
+          "round": 0,
+          "drafts_proposed": 4,
+          "drafts_accepted": 0,
+          "per_position_accept": [
+            false
+          ],
+          "per_position_target_top": [
+            17450
+          ],
+          "per_position_draft_top": [
+            29734
+          ],
+          "bonus_token_id": 17450,
+          "latency_ms": 931.4224999397993
+        },
+        {
+          "round": 1,
+          "drafts_proposed": 4,
+          "drafts_accepted": 4,
+          "per_position_accept": [
+            true,
+            true,
+            true,
+            true
+          ],
+          "per_position_target_top": [
+            25,
+            6145,
+            369,
+            36857
+          ],
+          "per_position_draft_top": [
+            25,
+            6145,
+            369,
+            36857
+          ],
+          "bonus_token_id": 389,
+          "latency_ms": 858.892333926633
+        },
+        {
+          "round": 2,
+          "drafts_proposed": 4,
+          "drafts_accepted": 0,
+          "per_position_accept": [
+            false
+          ],
+          "per_position_target_top": [
+            74383
+          ],
+          "per_position_draft_top": [
+            364
+          ],
+          "bonus_token_id": 74383,
+          "latency_ms": 2874.5147079462186
+        },
+        {
+          "round": 3,
+          "drafts_proposed": 4,
+          "drafts_accepted": 4,
+          "per_position_accept": [
+            true,
+            true,
+            true,
+            true
+          ],
+          "per_position_target_top": [
+            17503,
+            8259,
+            271,
+            30665
+          ],
+          "per_position_draft_top": [
+            17503,
+            8259,
+            271,
+            30665
+          ],
+          "bonus_token_id": 508,
+          "latency_ms": 1813.60124994535
+        },
+        {
+          "round": 4,
+          "drafts_proposed": 4,
+          "drafts_accepted": 4,
+          "per_position_accept": [
+            true,
+            true,
+            true,
+            true
+          ],
+          "per_position_target_top": [
+            10048,
+            31396,
+            594,
+            3988
+          ],
+          "per_position_draft_top": [
+            10048,
+            31396,
+            594,
+            3988
+          ],
+          "bonus_token_id": 49088,
+          "latency_ms": 956.0098339570686
+        },
+        {
+          "round": 5,
+          "drafts_proposed": 4,
+          "drafts_accepted": 4,
+          "per_position_accept": [
+            true,
+            true,
+            true,
+            true
+          ],
+          "per_position_target_top": [
+            40,
+            3900,
+            419,
+            2551
+          ],
+          "per_position_draft_top": [
+            40,
+            3900,
+            419,
+            2551
+          ],
+          "bonus_token_id": 13719,
+          "latency_ms": 2032.5948330573738
+        },
+        {
+          "round": 6,
+          "drafts_proposed": 4,
+          "drafts_accepted": 4,
+          "per_position_accept": [
+            true,
+            true,
+            true,
+            true
+          ],
+          "per_position_target_top": [
+            498,
+            1632,
+            13,
+            358
+          ],
+          "per_position_draft_top": [
+            498,
+            1632,
+            13,
+            358
+          ],
+          "bonus_token_id": 1079,
+          "latency_ms": 1991.7168749962002
+        },
+        {
+          "round": 7,
+          "drafts_proposed": 4,
+          "drafts_accepted": 4,
+          "per_position_accept": [
+            true,
+            true,
+            true,
+            true
+          ],
+          "per_position_target_top": [
+            4378,
+            311,
+            1681,
+            697
+          ],
+          "per_position_draft_top": [
+            4378,
+            311,
+            1681,
+            697
+          ],
+          "bonus_token_id": 11055,
+          "latency_ms": 1471.5463750762865
+        },
+        {
+          "round": 8,
+          "drafts_proposed": 4,
+          "drafts_accepted": 4,
+          "per_position_accept": [
+            true,
+            true,
+            true,
+            true
+          ],
+          "per_position_target_top": [
+            389,
+            279,
+            364,
+            86608
+          ],
+          "per_position_draft_top": [
+            389,
+            279,
+            364,
+            86608
+          ],
+          "bonus_token_id": 398,
+          "latency_ms": 1857.7281249454245
+        },
+        {
+          "round": 9,
+          "drafts_proposed": 4,
+          "drafts_accepted": 4,
+          "per_position_accept": [
+            true,
+            true,
+            true,
+            true
+          ],
+          "per_position_target_top": [
+            17503,
+            8259,
+            6,
+            358
+          ],
+          "per_position_draft_top": [
+            17503,
+            8259,
+            6,
+            358
+          ],
+          "bonus_token_id": 614,
+          "latency_ms": 1786.2253750208765
+        },
+        {
+          "round": 10,
+          "drafts_proposed": 4,
+          "drafts_accepted": 1,
+          "per_position_accept": [
+            true,
+            false
+          ],
+          "per_position_target_top": [
+            10030,
+            13
+          ],
+          "per_position_draft_top": [
+            10030,
+            369
+          ],
+          "bonus_token_id": 13,
+          "latency_ms": 2204.7605420229957
+        },
+        {
+          "round": 11,
+          "drafts_proposed": 4,
+          "drafts_accepted": 0,
+          "per_position_accept": [
+            false
+          ],
+          "per_position_target_top": [
+            358
+          ],
+          "per_position_draft_top": [
+            576
+          ],
+          "bonus_token_id": 358,
+          "latency_ms": 2798.0761660728604
+        },
+        {
+          "round": 12,
+          "drafts_proposed": 4,
+          "drafts_accepted": 0,
+          "per_position_accept": [
+            false
+          ],
+          "per_position_target_top": [
+            1035
+          ],
+          "per_position_draft_top": [
+            1079
+          ],
+          "bonus_token_id": 1035,
+          "latency_ms": 1227.4016250157729
+        },
+        {
+          "round": 13,
+          "drafts_proposed": 4,
+          "drafts_accepted": 2,
+          "per_position_accept": [
+            true,
+            true,
+            false
+          ],
+          "per_position_target_top": [
+            18875,
+            15401,
+            697
+          ],
+          "per_position_draft_top": [
+            18875,
+            15401,
+            432
+          ],
+          "bonus_token_id": 697,
+          "latency_ms": 1332.7572090784088
+        }
+      ]
+    },
+    {
+      "prompt": "Imagine you are writing a blog post comparing two popular smartphone models. Develop an outline for the blog post, including key points and subheadings to effectively compare and contrast the features, performance, and user experience of the two models.",
+      "prompt_token_ids": [
+        51057,
+        498,
+        525,
+        4378,
+        264,
+        5010,
+        1736,
+        26297,
+        1378,
+        5411,
+        21511,
+        4119,
+        13,
+        7843,
+        458,
+        21101,
+        369,
+        279,
+        5010,
+        1736,
+        11,
+        2670,
+        1376,
+        3501,
+        323,
+        1186,
+        1983,
+        819,
+        311,
+        13444,
+        9429,
+        323,
+        12872,
+        279,
+        4419,
+        11,
+        5068,
+        11,
+        323,
+        1196,
+        3139,
+        315,
+        279,
+        1378,
+        4119,
+        13
+      ],
+      "completion": " Additionally, include a section on the pricing and availability of each model to provide a comprehensive comparison. Finally, provide a conclusion that summarizes the key takeaways from the comparison and encourages readers to consider their own needs and preferences when making a purchase decision",
+      "committed_token_ids": [
+        22406,
+        11,
+        2924,
+        264,
+        3772,
+        389,
+        279,
+        21219,
+        323,
+        18048,
+        315,
+        1817,
+        1614,
+        311,
+        3410,
+        264,
+        15817,
+        12313,
+        13,
+        17375,
+        11,
+        3410,
+        264,
+        16688,
+        429,
+        93494,
+        279,
+        1376,
+        1896,
+        39590,
+        504,
+        279,
+        12313,
+        323,
+        36067,
+        12726,
+        311,
+        2908,
+        862,
+        1828,
+        3880,
+        323,
+        19322,
+        979,
+        3259,
+        264,
+        7627,
+        5480,
+        13,
+        715
+      ],
+      "cumulative_acceptance": 0.40789473684210525,
+      "decode_ms": 31890.119000105187,
+      "prefill_ms": 1936.1932500032708,
+      "tokens_per_second_decode": 1.5678837698860602,
+      "steps": [
+        {
+          "round": 0,
+          "drafts_proposed": 4,
+          "drafts_accepted": 0,
+          "per_position_accept": [
+            false
+          ],
+          "per_position_target_top": [
+            22406
+          ],
+          "per_position_draft_top": [
+            5443
+          ],
+          "bonus_token_id": 22406,
+          "latency_ms": 1062.8523339983076
+        },
+        {
+          "round": 1,
+          "drafts_proposed": 4,
+          "drafts_accepted": 3,
+          "per_position_accept": [
+            true,
+            true,
+            true,
+            false
+          ],
+          "per_position_target_top": [
+            11,
+            2924,
+            264,
+            3772
+          ],
+          "per_position_draft_top": [
+            11,
+            2924,
+            264,
+            1965
+          ],
+          "bonus_token_id": 3772,
+          "latency_ms": 912.9259999608621
+        },
+        {
+          "round": 2,
+          "drafts_proposed": 4,
+          "drafts_accepted": 2,
+          "per_position_accept": [
+            true,
+            true,
+            false
+          ],
+          "per_position_target_top": [
+            389,
+            279,
+            21219
+          ],
+          "per_position_draft_top": [
+            389,
+            279,
+            8709
+          ],
+          "bonus_token_id": 21219,
+          "latency_ms": 871.3309589074925
+        },
+        {
+          "round": 3,
+          "drafts_proposed": 4,
+          "drafts_accepted": 4,
+          "per_position_accept": [
+            true,
+            true,
+            true,
+            true
+          ],
+          "per_position_target_top": [
+            323,
+            18048,
+            315,
+            1817
+          ],
+          "per_position_draft_top": [
+            323,
+            18048,
+            315,
+            1817
+          ],
+          "bonus_token_id": 1614,
+          "latency_ms": 975.768749951385
+        },
+        {
+          "round": 4,
+          "drafts_proposed": 4,
+          "drafts_accepted": 0,
+          "per_position_accept": [
+            false
+          ],
+          "per_position_target_top": [
+            311
+          ],
+          "per_position_draft_top": [
+            11
+          ],
+          "bonus_token_id": 311,
+          "latency_ms": 902.7054159669206
+        },
+        {
+          "round": 5,
+          "drafts_proposed": 4,
+          "drafts_accepted": 0,
+          "per_position_accept": [
+            false
+          ],
+          "per_position_target_top": [
+            3410
+          ],
+          "per_position_draft_top": [
+            1492
+          ],
+          "bonus_token_id": 3410,
+          "latency_ms": 1649.645583005622
+        },
+        {
+          "round": 6,
+          "drafts_proposed": 4,
+          "drafts_accepted": 0,
+          "per_position_accept": [
+            false
+          ],
+          "per_position_target_top": [
+            264
+          ],
+          "per_position_draft_top": [
+            12726
+          ],
+          "bonus_token_id": 264,
+          "latency_ms": 1813.5962499072775
+        },
+        {
+          "round": 7,
+          "drafts_proposed": 4,
+          "drafts_accepted": 1,
+          "per_position_accept": [
+            true,
+            false
+          ],
+          "per_position_target_top": [
+            15817,
+            12313
+          ],
+          "per_position_draft_top": [
+            15817,
+            1651
+          ],
+          "bonus_token_id": 12313,
+          "latency_ms": 1002.9198749689385
+        },
+        {
+          "round": 8,
+          "drafts_proposed": 4,
+          "drafts_accepted": 3,
+          "per_position_accept": [
+            true,
+            true,
+            true,
+            false
+          ],
+          "per_position_target_top": [
+            13,
+            17375,
+            11,
+            3410
+          ],
+          "per_position_draft_top": [
+            13,
+            17375,
+            11,
+            2924
+          ],
+          "bonus_token_id": 3410,
+          "latency_ms": 3353.0624579871073
+        },
+        {
+          "round": 9,
+          "drafts_proposed": 4,
+          "drafts_accepted": 4,
+          "per_position_accept": [
+            true,
+            true,
+            true,
+            true
+          ],
+          "per_position_target_top": [
+            264,
+            16688,
+            429,
+            93494
+          ],
+          "per_position_draft_top": [
+            264,
+            16688,
+            429,
+            93494
+          ],
+          "bonus_token_id": 279,
+          "latency_ms": 2994.108916958794
+        },
+        {
+          "round": 10,
+          "drafts_proposed": 4,
+          "drafts_accepted": 1,
+          "per_position_accept": [
+            true,
+            false
+          ],
+          "per_position_target_top": [
+            1376,
+            1896
+          ],
+          "per_position_draft_top": [
+            1376,
+            11799
+          ],
+          "bonus_token_id": 1896,
+          "latency_ms": 3235.391207970679
+        },
+        {
+          "round": 11,
+          "drafts_proposed": 4,
+          "drafts_accepted": 1,
+          "per_position_accept": [
+            true,
+            false
+          ],
+          "per_position_target_top": [
+            39590,
+            504
+          ],
+          "per_position_draft_top": [
+            39590,
+            323
+          ],
+          "bonus_token_id": 504,
+          "latency_ms": 3382.119167014025
+        },
+        {
+          "round": 12,
+          "drafts_proposed": 4,
+          "drafts_accepted": 4,
+          "per_position_accept": [
+            true,
+            true,
+            true,
+            true
+          ],
+          "per_position_target_top": [
+            279,
+            12313,
+            323,
+            36067
+          ],
+          "per_position_draft_top": [
+            279,
+            12313,
+            323,
+            36067
+          ],
+          "bonus_token_id": 12726,
+          "latency_ms": 1201.288584037684
+        },
+        {
+          "round": 13,
+          "drafts_proposed": 4,
+          "drafts_accepted": 1,
+          "per_position_accept": [
+            true,
+            false
+          ],
+          "per_position_target_top": [
+            311,
+            2908
+          ],
+          "per_position_draft_top": [
+            311,
+            1281
+          ],
+          "bonus_token_id": 2908,
+          "latency_ms": 1302.175541059114
+        },
+        {
+          "round": 14,
+          "drafts_proposed": 4,
+          "drafts_accepted": 0,
+          "per_position_accept": [
+            false
+          ],
+          "per_position_target_top": [
+            862
+          ],
+          "per_position_draft_top": [
+            892
+          ],
+          "bonus_token_id": 862,
+          "latency_ms": 1358.0622499575838
+        },
+        {
+          "round": 15,
+          "drafts_proposed": 4,
+          "drafts_accepted": 1,
+          "per_position_accept": [
+            true,
+            false
+          ],
+          "per_position_target_top": [
+            1828,
+            3880
+          ],
+          "per_position_draft_top": [
+            1828,
+            21511
+          ],
+          "bonus_token_id": 3880,
+          "latency_ms": 1197.5918750977144
+        },
+        {
+          "round": 16,
+          "drafts_proposed": 4,
+          "drafts_accepted": 4,
+          "per_position_accept": [
+            true,
+            true,
+            true,
+            true
+          ],
+          "per_position_target_top": [
+            323,
+            19322,
+            979,
+            3259
+          ],
+          "per_position_draft_top": [
+            323,
+            19322,
+            979,
+            3259
+          ],
+          "bonus_token_id": 264,
+          "latency_ms": 1714.8449999513105
+        },
+        {
+          "round": 17,
+          "drafts_proposed": 4,
+          "drafts_accepted": 0,
+          "per_position_accept": [
+            false
+          ],
+          "per_position_target_top": [
+            7627
+          ],
+          "per_position_draft_top": [
+            5480
+          ],
+          "bonus_token_id": 7627,
+          "latency_ms": 1745.2812920091674
+        },
+        {
+          "round": 18,
+          "drafts_proposed": 4,
+          "drafts_accepted": 2,
+          "per_position_accept": [
+            true,
+            true,
+            false
+          ],
+          "per_position_target_top": [
+            5480,
+            13,
+            715
+          ],
+          "per_position_draft_top": [
+            5480,
+            13,
+            3070
+          ],
+          "bonus_token_id": 715,
+          "latency_ms": 1213.9045830117539
+        }
+      ]
+    },
+    {
+      "prompt": "Write a persuasive email to convince your introverted friend, who dislikes public speaking, to volunteer as a guest speaker at a local event. Use compelling arguments and address potential objections. Please be concise.",
+      "prompt_token_ids": [
+        7985,
+        264,
+        65243,
+        2551,
+        311,
+        26910,
+        697,
+        19706,
+        21630,
+        4238,
+        11,
+        879,
+        98885,
+        584,
+        12094,
+        11,
+        311,
+        25144,
+        438,
+        264,
+        8640,
+        18601,
+        518,
+        264,
+        2205,
+        1538,
+        13,
+        5443,
+        28622,
+        5977,
+        323,
+        2621,
+        4650,
+        53011,
+        13,
+        5209,
+        387,
+        63594,
+        13
+      ],
+      "completion": " Subject: Volunteering as a Guest Speaker: A Unique Opportunity for Growth and Impact\n\nDear [Friend's Name],\n\nI hope this message finds you well. I wanted to reach out to you about an exciting opportunity that could significantly benefit both",
+      "committed_token_ids": [
+        17450,
+        25,
+        10882,
+        10830,
+        4671,
+        438,
+        264,
+        26215,
+        29073,
+        25,
+        362,
+        28650,
+        47279,
+        369,
+        33771,
+        323,
+        28580,
+        271,
+        30665,
+        508,
+        41637,
+        594,
+        3988,
+        49088,
+        40,
+        3900,
+        419,
+        1943,
+        13719,
+        498,
+        1632,
+        13,
+        358,
+        4829,
+        311,
+        5545,
+        700,
+        311,
+        498,
+        911,
+        458,
+        13245,
+        6638,
+        429,
+        1410,
+        11941,
+        8760,
+        2176,
+        498
+      ],
+      "cumulative_acceptance": 0.4305555555555556,
+      "decode_ms": 21848.518874961883,
+      "prefill_ms": 496.9056249829009,
+      "tokens_per_second_decode": 2.2427149538339353,
+      "steps": [
+        {
+          "round": 0,
+          "drafts_proposed": 4,
+          "drafts_accepted": 0,
+          "per_position_accept": [
+            false
+          ],
+          "per_position_target_top": [
+            17450
+          ],
+          "per_position_draft_top": [
+            4710
+          ],
+          "bonus_token_id": 17450,
+          "latency_ms": 1724.689833004959
+        },
+        {
+          "round": 1,
+          "drafts_proposed": 4,
+          "drafts_accepted": 4,
+          "per_position_accept": [
+            true,
+            true,
+            true,
+            true
+          ],
+          "per_position_target_top": [
+            25,
+            10882,
+            10830,
+            4671
+          ],
+          "per_position_draft_top": [
+            25,
+            10882,
+            10830,
+            4671
+          ],
+          "bonus_token_id": 438,
+          "latency_ms": 883.4602090064436
+        },
+        {
+          "round": 2,
+          "drafts_proposed": 4,
+          "drafts_accepted": 3,
+          "per_position_accept": [
+            true,
+            true,
+            true,
+            false
+          ],
+          "per_position_target_top": [
+            264,
+            26215,
+            29073,
+            25
+          ],
+          "per_position_draft_top": [
+            264,
+            26215,
+            29073,
+            518
+          ],
+          "bonus_token_id": 25,
+          "latency_ms": 869.6030839346349
+        },
+        {
+          "round": 3,
+          "drafts_proposed": 4,
+          "drafts_accepted": 1,
+          "per_position_accept": [
+            true,
+            false
+          ],
+          "per_position_target_top": [
+            362,
+            28650
+          ],
+          "per_position_draft_top": [
+            362,
+            8513
+          ],
+          "bonus_token_id": 28650,
+          "latency_ms": 884.2587500112131
+        },
+        {
+          "round": 4,
+          "drafts_proposed": 4,
+          "drafts_accepted": 2,
+          "per_position_accept": [
+            true,
+            true,
+            false
+          ],
+          "per_position_target_top": [
+            47279,
+            369,
+            33771
+          ],
+          "per_position_draft_top": [
+            47279,
+            369,
+            4615
+          ],
+          "bonus_token_id": 33771,
+          "latency_ms": 1147.0887089380994
+        },
+        {
+          "round": 5,
+          "drafts_proposed": 4,
+          "drafts_accepted": 1,
+          "per_position_accept": [
+            true,
+            false
+          ],
+          "per_position_target_top": [
+            323,
+            28580
+          ],
+          "per_position_draft_top": [
+            323,
+            11032
+          ],
+          "bonus_token_id": 28580,
+          "latency_ms": 1617.391417035833
+        },
+        {
+          "round": 6,
+          "drafts_proposed": 4,
+          "drafts_accepted": 4,
+          "per_position_accept": [
+            true,
+            true,
+            true,
+            true
+          ],
+          "per_position_target_top": [
+            271,
+            30665,
+            508,
+            41637
+          ],
+          "per_position_draft_top": [
+            271,
+            30665,
+            508,
+            41637
+          ],
+          "bonus_token_id": 594,
+          "latency_ms": 908.2051248988137
+        },
+        {
+          "round": 7,
+          "drafts_proposed": 4,
+          "drafts_accepted": 4,
+          "per_position_accept": [
+            true,
+            true,
+            true,
+            true
+          ],
+          "per_position_target_top": [
+            3988,
+            49088,
+            40,
+            3900
+          ],
+          "per_position_draft_top": [
+            3988,
+            49088,
+            40,
+            3900
+          ],
+          "bonus_token_id": 419,
+          "latency_ms": 958.715624990873
+        },
+        {
+          "round": 8,
+          "drafts_proposed": 4,
+          "drafts_accepted": 0,
+          "per_position_accept": [
+            false
+          ],
+          "per_position_target_top": [
+            1943
+          ],
+          "per_position_draft_top": [
+            2551
+          ],
+          "bonus_token_id": 1943,
+          "latency_ms": 1273.6368330661207
+        },
+        {
+          "round": 9,
+          "drafts_proposed": 4,
+          "drafts_accepted": 4,
+          "per_position_accept": [
+            true,
+            true,
+            true,
+            true
+          ],
+          "per_position_target_top": [
+            13719,
+            498,
+            1632,
+            13
+          ],
+          "per_position_draft_top": [
+            13719,
+            498,
+            1632,
+            13
+          ],
+          "bonus_token_id": 358,
+          "latency_ms": 1117.2022499376908
+        },
+        {
+          "round": 10,
+          "drafts_proposed": 4,
+          "drafts_accepted": 0,
+          "per_position_accept": [
+            false
+          ],
+          "per_position_target_top": [
+            4829
+          ],
+          "per_position_draft_top": [
+            1079
+          ],
+          "bonus_token_id": 4829,
+          "latency_ms": 1121.3552079861984
+        },
+        {
+          "round": 11,
+          "drafts_proposed": 4,
+          "drafts_accepted": 4,
+          "per_position_accept": [
+            true,
+            true,
+            true,
+            true
+          ],
+          "per_position_target_top": [
+            311,
+            5545,
+            700,
+            311
+          ],
+          "per_position_draft_top": [
+            311,
+            5545,
+            700,
+            311
+          ],
+          "bonus_token_id": 498,
+          "latency_ms": 1091.896832920611
+        },
+        {
+          "round": 12,
+          "drafts_proposed": 4,
+          "drafts_accepted": 0,
+          "per_position_accept": [
+            false
+          ],
+          "per_position_target_top": [
+            911
+          ],
+          "per_position_draft_top": [
+            311
+          ],
+          "bonus_token_id": 911,
+          "latency_ms": 1098.8876249175519
+        },
+        {
+          "round": 13,
+          "drafts_proposed": 4,
+          "drafts_accepted": 0,
+          "per_position_accept": [
+            false
+          ],
+          "per_position_target_top": [
+            458
+          ],
+          "per_position_draft_top": [
+            264
+          ],
+          "bonus_token_id": 458,
+          "latency_ms": 1765.8160419669002
+        },
+        {
+          "round": 14,
+          "drafts_proposed": 4,
+          "drafts_accepted": 3,
+          "per_position_accept": [
+            true,
+            true,
+            true,
+            false
+          ],
+          "per_position_target_top": [
+            13245,
+            6638,
+            429,
+            1410
+          ],
+          "per_position_draft_top": [
+            13245,
+            6638,
+            429,
+            358
+          ],
+          "bonus_token_id": 1410,
+          "latency_ms": 1525.1996249426156
+        },
+        {
+          "round": 15,
+          "drafts_proposed": 4,
+          "drafts_accepted": 0,
+          "per_position_accept": [
+            false
+          ],
+          "per_position_target_top": [
+            11941
+          ],
+          "per_position_draft_top": [
+            2297
+          ],
+          "bonus_token_id": 11941,
+          "latency_ms": 1205.4663749877363
+        },
+        {
+          "round": 16,
+          "drafts_proposed": 4,
+          "drafts_accepted": 0,
+          "per_position_accept": [
+            false
+          ],
+          "per_position_target_top": [
+            8760
+          ],
+          "per_position_draft_top": [
+            5421
+          ],
+          "bonus_token_id": 8760,
+          "latency_ms": 1301.119666080922
+        },
+        {
+          "round": 17,
+          "drafts_proposed": 4,
+          "drafts_accepted": 1,
+          "per_position_accept": [
+            true,
+            false
+          ],
+          "per_position_target_top": [
+            2176,
+            498
+          ],
+          "per_position_draft_top": [
+            2176,
+            315
+          ],
+          "bonus_token_id": 498,
+          "latency_ms": 1354.251208016649
+        }
+      ]
+    },
+    {
+      "prompt": "Describe a vivid and unique character, using strong imagery and creative language. Please answer in fewer than two paragraphs.",
+      "prompt_token_ids": [
+        74785,
+        264,
+        42020,
+        323,
+        4911,
+        3668,
+        11,
+        1667,
+        3746,
+        40445,
+        323,
+        11521,
+        4128,
+        13,
+        5209,
+        4226,
+        304,
+        16745,
+        1091,
+        1378,
+        42643,
+        13
+      ],
+      "completion": " \n\nThe character is a young woman named Elara, who has the ability to manipulate the elements of nature. She can summon lightning bolts from the sky, control the wind, and even create earthquakes. Elara is a fierce and powerful warrior",
+      "committed_token_ids": [
+        4710,
+        785,
+        3668,
+        374,
+        264,
+        3908,
+        5220,
+        6941,
+        3984,
+        5059,
+        11,
+        879,
+        702,
+        279,
+        5726,
+        311,
+        36635,
+        279,
+        5424,
+        315,
+        6993,
+        13,
+        2932,
+        646,
+        27545,
+        32438,
+        48839,
+        504,
+        279,
+        12884,
+        11,
+        2524,
+        279,
+        9956,
+        11,
+        323,
+        1496,
+        1855,
+        65479,
+        13,
+        3984,
+        5059,
+        374,
+        264,
+        41342,
+        323,
+        7988,
+        37390
+      ],
+      "cumulative_acceptance": 0.4166666666666667,
+      "decode_ms": 16659.202291979454,
+      "prefill_ms": 404.2299999855459,
+      "tokens_per_second_decode": 2.881290421877494,
+      "steps": [
+        {
+          "round": 0,
+          "drafts_proposed": 4,
+          "drafts_accepted": 1,
+          "per_position_accept": [
+            true,
+            false
+          ],
+          "per_position_target_top": [
+            4710,
+            785
+          ],
+          "per_position_draft_top": [
+            4710,
+            641
+          ],
+          "bonus_token_id": 785,
+          "latency_ms": 987.7416250528768
+        },
+        {
+          "round": 1,
+          "drafts_proposed": 4,
+          "drafts_accepted": 4,
+          "per_position_accept": [
+            true,
+            true,
+            true,
+            true
+          ],
+          "per_position_target_top": [
+            3668,
+            374,
+            264,
+            3908
+          ],
+          "per_position_draft_top": [
+            3668,
+            374,
+            264,
+            3908
+          ],
+          "bonus_token_id": 5220,
+          "latency_ms": 889.5470830611885
+        },
+        {
+          "round": 2,
+          "drafts_proposed": 4,
+          "drafts_accepted": 1,
+          "per_position_accept": [
+            true,
+            false
+          ],
+          "per_position_target_top": [
+            6941,
+            3984
+          ],
+          "per_position_draft_top": [
+            6941,
+            47290
+          ],
+          "bonus_token_id": 3984,
+          "latency_ms": 732.8505839686841
+        },
+        {
+          "round": 3,
+          "drafts_proposed": 4,
+          "drafts_accepted": 3,
+          "per_position_accept": [
+            true,
+            true,
+            true,
+            false
+          ],
+          "per_position_target_top": [
+            5059,
+            11,
+            879,
+            702
+          ],
+          "per_position_draft_top": [
+            5059,
+            11,
+            879,
+            49226
+          ],
+          "bonus_token_id": 702,
+          "latency_ms": 835.1713329320773
+        },
+        {
+          "round": 4,
+          "drafts_proposed": 4,
+          "drafts_accepted": 0,
+          "per_position_accept": [
+            false
+          ],
+          "per_position_target_top": [
+            279
+          ],
+          "per_position_draft_top": [
+            264
+          ],
+          "bonus_token_id": 279,
+          "latency_ms": 1036.9644169695675
+        },
+        {
+          "round": 5,
+          "drafts_proposed": 4,
+          "drafts_accepted": 4,
+          "per_position_accept": [
+            true,
+            true,
+            true,
+            true
+          ],
+          "per_position_target_top": [
+            5726,
+            311,
+            36635,
+            279
+          ],
+          "per_position_draft_top": [
+            5726,
+            311,
+            36635,
+            279
+          ],
+          "bonus_token_id": 5424,
+          "latency_ms": 862.3020839877427
+        },
+        {
+          "round": 6,
+          "drafts_proposed": 4,
+          "drafts_accepted": 4,
+          "per_position_accept": [
+            true,
+            true,
+            true,
+            true
+          ],
+          "per_position_target_top": [
+            315,
+            6993,
+            13,
+            2932
+          ],
+          "per_position_draft_top": [
+            315,
+            6993,
+            13,
+            2932
+          ],
+          "bonus_token_id": 646,
+          "latency_ms": 918.2068749796599
+        },
+        {
+          "round": 7,
+          "drafts_proposed": 4,
+          "drafts_accepted": 0,
+          "per_position_accept": [
+            false
+          ],
+          "per_position_target_top": [
+            27545
+          ],
+          "per_position_draft_top": [
+            1855
+          ],
+          "bonus_token_id": 27545,
+          "latency_ms": 851.9775000168011
+        },
+        {
+          "round": 8,
+          "drafts_proposed": 4,
+          "drafts_accepted": 0,
+          "per_position_accept": [
+            false
+          ],
+          "per_position_target_top": [
+            32438
+          ],
+          "per_position_draft_top": [
+            11174
+          ],
+          "bonus_token_id": 32438,
+          "latency_ms": 902.4276249110699
+        },
+        {
+          "round": 9,
+          "drafts_proposed": 4,
+          "drafts_accepted": 0,
+          "per_position_accept": [
+            false
+          ],
+          "per_position_target_top": [
+            48839
+          ],
+          "per_position_draft_top": [
+            11
+          ],
+          "bonus_token_id": 48839,
+          "latency_ms": 938.9196669217199
+        },
+        {
+          "round": 10,
+          "drafts_proposed": 4,
+          "drafts_accepted": 0,
+          "per_position_accept": [
+            false
+          ],
+          "per_position_target_top": [
+            504
+          ],
+          "per_position_draft_top": [
+            11
+          ],
+          "bonus_token_id": 504,
+          "latency_ms": 902.2669999394566
+        },
+        {
+          "round": 11,
+          "drafts_proposed": 4,
+          "drafts_accepted": 3,
+          "per_position_accept": [
+            true,
+            true,
+            true,
+            false
+          ],
+          "per_position_target_top": [
+            279,
+            12884,
+            11,
+            2524
+          ],
+          "per_position_draft_top": [
+            279,
+            12884,
+            11,
+            1855
+          ],
+          "bonus_token_id": 2524,
+          "latency_ms": 904.6945419395342
+        },
+        {
+          "round": 12,
+          "drafts_proposed": 4,
+          "drafts_accepted": 1,
+          "per_position_accept": [
+            true,
+            false
+          ],
+          "per_position_target_top": [
+            279,
+            9956
+          ],
+          "per_position_draft_top": [
+            279,
+            6396
+          ],
+          "bonus_token_id": 9956,
+          "latency_ms": 910.2394169894978
+        },
+        {
+          "round": 13,
+          "drafts_proposed": 4,
+          "drafts_accepted": 4,
+          "per_position_accept": [
+            true,
+            true,
+            true,
+            true
+          ],
+          "per_position_target_top": [
+            11,
+            323,
+            1496,
+            1855
+          ],
+          "per_position_draft_top": [
+            11,
+            323,
+            1496,
+            1855
+          ],
+          "bonus_token_id": 65479,
+          "latency_ms": 879.7744999174029
+        },
+        {
+          "round": 14,
+          "drafts_proposed": 4,
+          "drafts_accepted": 1,
+          "per_position_accept": [
+            true,
+            false
+          ],
+          "per_position_target_top": [
+            13,
+            3984
+          ],
+          "per_position_draft_top": [
+            13,
+            17715
+          ],
+          "bonus_token_id": 3984,
+          "latency_ms": 1022.3424169234931
+        },
+        {
+          "round": 15,
+          "drafts_proposed": 4,
+          "drafts_accepted": 3,
+          "per_position_accept": [
+            true,
+            true,
+            true,
+            false
+          ],
+          "per_position_target_top": [
+            5059,
+            374,
+            264,
+            41342
+          ],
+          "per_position_draft_top": [
+            5059,
+            374,
+            264,
+            5810
+          ],
+          "bonus_token_id": 41342,
+          "latency_ms": 998.8978329347447
+        },
+        {
+          "round": 16,
+          "drafts_proposed": 4,
+          "drafts_accepted": 0,
+          "per_position_accept": [
+            false
+          ],
+          "per_position_target_top": [
+            323
+          ],
+          "per_position_draft_top": [
+            37390
+          ],
+          "bonus_token_id": 323,
+          "latency_ms": 1031.494792085141
+        },
+        {
+          "round": 17,
+          "drafts_proposed": 4,
+          "drafts_accepted": 1,
+          "per_position_accept": [
+            true,
+            false
+          ],
+          "per_position_target_top": [
+            7988,
+            37390
+          ],
+          "per_position_draft_top": [
+            7988,
+            3842
+          ],
+          "bonus_token_id": 37390,
+          "latency_ms": 1053.18141693715
+        }
+      ]
+    },
+    {
+      "prompt": "Write a captivating movie review for a recently released science fiction film, discussing its plot, characters, and special effects.",
+      "prompt_token_ids": [
+        7985,
+        264,
+        85182,
+        5700,
+        3395,
+        369,
+        264,
+        5926,
+        5880,
+        8038,
+        16989,
+        4531,
+        11,
+        24392,
+        1181,
+        7089,
+        11,
+        5766,
+        11,
+        323,
+        3281,
+        6239,
+        13
+      ],
+      "completion": " The review should be written in a formal tone and include a detailed analysis of the film's strengths and weaknesses. Additionally, the review should provide a recommendation for the audience based on their personal preferences and interests. The review should be approximately 5",
+      "committed_token_ids": [
+        576,
+        3395,
+        1265,
+        387,
+        5326,
+        304,
+        264,
+        15908,
+        16232,
+        323,
+        2924,
+        264,
+        11682,
+        6358,
+        315,
+        279,
+        4531,
+        594,
+        35386,
+        323,
+        43567,
+        13,
+        22406,
+        11,
+        279,
+        3395,
+        1265,
+        3410,
+        264,
+        27682,
+        369,
+        279,
+        10650,
+        3118,
+        389,
+        862,
+        4345,
+        19322,
+        323,
+        11772,
+        13,
+        576,
+        3395,
+        1265,
+        387,
+        13187,
+        220,
+        20
+      ],
+      "cumulative_acceptance": 0.45588235294117646,
+      "decode_ms": 19514.033791958354,
+      "prefill_ms": 367.4714579246938,
+      "tokens_per_second_decode": 2.459768211520705,
+      "steps": [
+        {
+          "round": 0,
+          "drafts_proposed": 4,
+          "drafts_accepted": 4,
+          "per_position_accept": [
+            true,
+            true,
+            true,
+            true
+          ],
+          "per_position_target_top": [
+            576,
+            3395,
+            1265,
+            387
+          ],
+          "per_position_draft_top": [
+            576,
+            3395,
+            1265,
+            387
+          ],
+          "bonus_token_id": 5326,
+          "latency_ms": 1200.9952500229701
+        },
+        {
+          "round": 1,
+          "drafts_proposed": 4,
+          "drafts_accepted": 4,
+          "per_position_accept": [
+            true,
+            true,
+            true,
+            true
+          ],
+          "per_position_target_top": [
+            304,
+            264,
+            15908,
+            16232
+          ],
+          "per_position_draft_top": [
+            304,
+            264,
+            15908,
+            16232
+          ],
+          "bonus_token_id": 323,
+          "latency_ms": 683.7892909534276
+        },
+        {
+          "round": 2,
+          "drafts_proposed": 4,
+          "drafts_accepted": 1,
+          "per_position_accept": [
+            true,
+            false
+          ],
+          "per_position_target_top": [
+            2924,
+            264
+          ],
+          "per_position_draft_top": [
+            2924,
+            3151
+          ],
+          "bonus_token_id": 264,
+          "latency_ms": 841.7056249454618
+        },
+        {
+          "round": 3,
+          "drafts_proposed": 4,
+          "drafts_accepted": 0,
+          "per_position_accept": [
+            false
+          ],
+          "per_position_target_top": [
+            11682
+          ],
+          "per_position_draft_top": [
+            9814
+          ],
+          "bonus_token_id": 11682,
+          "latency_ms": 862.0907090371475
+        },
+        {
+          "round": 4,
+          "drafts_proposed": 4,
+          "drafts_accepted": 4,
+          "per_position_accept": [
+            true,
+            true,
+            true,
+            true
+          ],
+          "per_position_target_top": [
+            6358,
+            315,
+            279,
+            4531
+          ],
+          "per_position_draft_top": [
+            6358,
+            315,
+            279,
+            4531
+          ],
+          "bonus_token_id": 594,
+          "latency_ms": 881.9199170684442
+        },
+        {
+          "round": 5,
+          "drafts_proposed": 4,
+          "drafts_accepted": 4,
+          "per_position_accept": [
+            true,
+            true,
+            true,
+            true
+          ],
+          "per_position_target_top": [
+            35386,
+            323,
+            43567,
+            13
+          ],
+          "per_position_draft_top": [
+            35386,
+            323,
+            43567,
+            13
+          ],
+          "bonus_token_id": 22406,
+          "latency_ms": 1064.9273749440908
+        },
+        {
+          "round": 6,
+          "drafts_proposed": 4,
+          "drafts_accepted": 1,
+          "per_position_accept": [
+            true,
+            false
+          ],
+          "per_position_target_top": [
+            11,
+            279
+          ],
+          "per_position_draft_top": [
+            11,
+            4486
+          ],
+          "bonus_token_id": 279,
+          "latency_ms": 1116.199625073932
+        },
+        {
+          "round": 7,
+          "drafts_proposed": 4,
+          "drafts_accepted": 2,
+          "per_position_accept": [
+            true,
+            true,
+            false
+          ],
+          "per_position_target_top": [
+            3395,
+            1265,
+            3410
+          ],
+          "per_position_draft_top": [
+            3395,
+            1265,
+            2924
+          ],
+          "bonus_token_id": 3410,
+          "latency_ms": 904.7390000196174
+        },
+        {
+          "round": 8,
+          "drafts_proposed": 4,
+          "drafts_accepted": 1,
+          "per_position_accept": [
+            true,
+            false
+          ],
+          "per_position_target_top": [
+            264,
+            27682
+          ],
+          "per_position_draft_top": [
+            264,
+            9814
+          ],
+          "bonus_token_id": 27682,
+          "latency_ms": 3052.081665955484
+        },
+        {
+          "round": 9,
+          "drafts_proposed": 4,
+          "drafts_accepted": 1,
+          "per_position_accept": [
+            true,
+            false
+          ],
+          "per_position_target_top": [
+            369,
+            279
+          ],
+          "per_position_draft_top": [
+            369,
+            4650
+          ],
+          "bonus_token_id": 279,
+          "latency_ms": 1011.0169170657173
+        },
+        {
+          "round": 10,
+          "drafts_proposed": 4,
+          "drafts_accepted": 0,
+          "per_position_accept": [
+            false
+          ],
+          "per_position_target_top": [
+            10650
+          ],
+          "per_position_draft_top": [
+            4531
+          ],
+          "bonus_token_id": 10650,
+          "latency_ms": 930.4159170715138
+        },
+        {
+          "round": 11,
+          "drafts_proposed": 4,
+          "drafts_accepted": 0,
+          "per_position_accept": [
+            false
+          ],
+          "per_position_target_top": [
+            3118
+          ],
+          "per_position_draft_top": [
+            11
+          ],
+          "bonus_token_id": 3118,
+          "latency_ms": 984.3679999466985
+        },
+        {
+          "round": 12,
+          "drafts_proposed": 4,
+          "drafts_accepted": 1,
+          "per_position_accept": [
+            true,
+            false
+          ],
+          "per_position_target_top": [
+            389,
+            862
+          ],
+          "per_position_draft_top": [
+            389,
+            279
+          ],
+          "bonus_token_id": 862,
+          "latency_ms": 1105.255417060107
+        },
+        {
+          "round": 13,
+          "drafts_proposed": 4,
+          "drafts_accepted": 0,
+          "per_position_accept": [
+            false
+          ],
+          "per_position_target_top": [
+            4345
+          ],
+          "per_position_draft_top": [
+            11772
+          ],
+          "bonus_token_id": 4345,
+          "latency_ms": 946.5135000646114
+        },
+        {
+          "round": 14,
+          "drafts_proposed": 4,
+          "drafts_accepted": 4,
+          "per_position_accept": [
+            true,
+            true,
+            true,
+            true
+          ],
+          "per_position_target_top": [
+            19322,
+            323,
+            11772,
+            13
+          ],
+          "per_position_draft_top": [
+            19322,
+            323,
+            11772,
+            13
+          ],
+          "bonus_token_id": 576,
+          "latency_ms": 1623.7862500129268
+        },
+        {
+          "round": 15,
+          "drafts_proposed": 4,
+          "drafts_accepted": 3,
+          "per_position_accept": [
+            true,
+            true,
+            true,
+            false
+          ],
+          "per_position_target_top": [
+            3395,
+            1265,
+            387,
+            13187
+          ],
+          "per_position_draft_top": [
+            3395,
+            1265,
+            387,
+            518
+          ],
+          "bonus_token_id": 13187,
+          "latency_ms": 1270.8997919689864
+        },
+        {
+          "round": 16,
+          "drafts_proposed": 4,
+          "drafts_accepted": 1,
+          "per_position_accept": [
+            true,
+            false
+          ],
+          "per_position_target_top": [
+            220,
+            20
+          ],
+          "per_position_draft_top": [
+            220,
+            16
+          ],
+          "bonus_token_id": 20,
+          "latency_ms": 1033.0947909969836
+        }
+      ]
+    },
+    {
+      "prompt": "Structure a podcast script for an episode discussing the influence of streaming platforms on the music industry.",
+      "prompt_token_ids": [
+        22952,
+        264,
+        17711,
+        5316,
+        369,
+        458,
+        9234,
+        24392,
+        279,
+        10173,
+        315,
+        16842,
+        15409,
+        389,
+        279,
+        4627,
+        4958,
+        13
+      ],
+      "completion": " The script should include an introduction, a discussion of the impact of streaming platforms on the music industry, and a conclusion. The script should be approximately 10 minutes long and should be delivered in a conversational style. Introduction: Welcome to",
+      "committed_token_ids": [
+        576,
+        5316,
+        1265,
+        2924,
+        458,
+        16800,
+        11,
+        264,
+        10219,
+        315,
+        279,
+        5421,
+        315,
+        16842,
+        15409,
+        389,
+        279,
+        4627,
+        4958,
+        11,
+        323,
+        264,
+        16688,
+        13,
+        576,
+        5316,
+        1265,
+        387,
+        13187,
+        220,
+        16,
+        15,
+        4420,
+        1293,
+        323,
+        1265,
+        387,
+        12600,
+        304,
+        264,
+        7517,
+        1663,
+        1707,
+        13,
+        28338,
+        25,
+        20166,
+        311,
+        279,
+        17711
+      ],
+      "cumulative_acceptance": 0.5833333333333334,
+      "decode_ms": 14560.799208004028,
+      "prefill_ms": 373.3287090435624,
+      "tokens_per_second_decode": 3.4338774462678634,
+      "steps": [
+        {
+          "round": 0,
+          "drafts_proposed": 4,
+          "drafts_accepted": 4,
+          "per_position_accept": [
+            true,
+            true,
+            true,
+            true
+          ],
+          "per_position_target_top": [
+            576,
+            5316,
+            1265,
+            2924
+          ],
+          "per_position_draft_top": [
+            576,
+            5316,
+            1265,
+            2924
+          ],
+          "bonus_token_id": 458,
+          "latency_ms": 675.1489159651101
+        },
+        {
+          "round": 1,
+          "drafts_proposed": 4,
+          "drafts_accepted": 2,
+          "per_position_accept": [
+            true,
+            true,
+            false
+          ],
+          "per_position_target_top": [
+            16800,
+            11,
+            264
+          ],
+          "per_position_draft_top": [
+            16800,
+            11,
+            2326
+          ],
+          "bonus_token_id": 264,
+          "latency_ms": 677.6190409436822
+        },
+        {
+          "round": 2,
+          "drafts_proposed": 4,
+          "drafts_accepted": 3,
+          "per_position_accept": [
+            true,
+            true,
+            true,
+            false
+          ],
+          "per_position_target_top": [
+            10219,
+            315,
+            279,
+            5421
+          ],
+          "per_position_draft_top": [
+            10219,
+            315,
+            279,
+            15379
+          ],
+          "bonus_token_id": 5421,
+          "latency_ms": 674.2114579537883
+        },
+        {
+          "round": 3,
+          "drafts_proposed": 4,
+          "drafts_accepted": 2,
+          "per_position_accept": [
+            true,
+            true,
+            false
+          ],
+          "per_position_target_top": [
+            315,
+            16842,
+            15409
+          ],
+          "per_position_draft_top": [
+            315,
+            16842,
+            389
+          ],
+          "bonus_token_id": 15409,
+          "latency_ms": 781.9812499219552
+        },
+        {
+          "round": 4,
+          "drafts_proposed": 4,
+          "drafts_accepted": 4,
+          "per_position_accept": [
+            true,
+            true,
+            true,
+            true
+          ],
+          "per_position_target_top": [
+            389,
+            279,
+            4627,
+            4958
+          ],
+          "per_position_draft_top": [
+            389,
+            279,
+            4627,
+            4958
+          ],
+          "bonus_token_id": 11,
+          "latency_ms": 1010.3502499405295
+        },
+        {
+          "round": 5,
+          "drafts_proposed": 4,
+          "drafts_accepted": 4,
+          "per_position_accept": [
+            true,
+            true,
+            true,
+            true
+          ],
+          "per_position_target_top": [
+            323,
+            264,
+            16688,
+            13
+          ],
+          "per_position_draft_top": [
+            323,
+            264,
+            16688,
+            13
+          ],
+          "bonus_token_id": 576,
+          "latency_ms": 1225.1532090594992
+        },
+        {
+          "round": 6,
+          "drafts_proposed": 4,
+          "drafts_accepted": 3,
+          "per_position_accept": [
+            true,
+            true,
+            true,
+            false
+          ],
+          "per_position_target_top": [
+            5316,
+            1265,
+            387,
+            13187
+          ],
+          "per_position_draft_top": [
+            5316,
+            1265,
+            387,
+            5326
+          ],
+          "bonus_token_id": 13187,
+          "latency_ms": 1102.2206250345334
+        },
+        {
+          "round": 7,
+          "drafts_proposed": 4,
+          "drafts_accepted": 1,
+          "per_position_accept": [
+            true,
+            false
+          ],
+          "per_position_target_top": [
+            220,
+            16
+          ],
+          "per_position_draft_top": [
+            220,
+            18
+          ],
+          "bonus_token_id": 16,
+          "latency_ms": 900.4063750617206
+        },
+        {
+          "round": 8,
+          "drafts_proposed": 4,
+          "drafts_accepted": 4,
+          "per_position_accept": [
+            true,
+            true,
+            true,
+            true
+          ],
+          "per_position_target_top": [
+            15,
+            4420,
+            1293,
+            323
+          ],
+          "per_position_draft_top": [
+            15,
+            4420,
+            1293,
+            323
+          ],
+          "bonus_token_id": 1265,
+          "latency_ms": 878.8312500109896
+        },
+        {
+          "round": 9,
+          "drafts_proposed": 4,
+          "drafts_accepted": 0,
+          "per_position_accept": [
+            false
+          ],
+          "per_position_target_top": [
+            387
+          ],
+          "per_position_draft_top": [
+            2924
+          ],
+          "bonus_token_id": 387,
+          "latency_ms": 893.4202910168096
+        },
+        {
+          "round": 10,
+          "drafts_proposed": 4,
+          "drafts_accepted": 0,
+          "per_position_accept": [
+            false
+          ],
+          "per_position_target_top": [
+            12600
+          ],
+          "per_position_draft_top": [
+            5326
+          ],
+          "bonus_token_id": 12600,
+          "latency_ms": 895.1523749856278
+        },
+        {
+          "round": 11,
+          "drafts_proposed": 4,
+          "drafts_accepted": 4,
+          "per_position_accept": [
+            true,
+            true,
+            true,
+            true
+          ],
+          "per_position_target_top": [
+            304,
+            264,
+            7517,
+            1663
+          ],
+          "per_position_draft_top": [
+            304,
+            264,
+            7517,
+            1663
+          ],
+          "bonus_token_id": 1707,
+          "latency_ms": 901.1572499293834
+        },
+        {
+          "round": 12,
+          "drafts_proposed": 4,
+          "drafts_accepted": 1,
+          "per_position_accept": [
+            true,
+            false
+          ],
+          "per_position_target_top": [
+            13,
+            28338
+          ],
+          "per_position_draft_top": [
+            13,
+            576
+          ],
+          "bonus_token_id": 28338,
+          "latency_ms": 956.4837920479476
+        },
+        {
+          "round": 13,
+          "drafts_proposed": 4,
+          "drafts_accepted": 0,
+          "per_position_accept": [
+            false
+          ],
+          "per_position_target_top": [
+            25
+          ],
+          "per_position_draft_top": [
+            1447
+          ],
+          "bonus_token_id": 25,
+          "latency_ms": 1925.5436670500785
+        },
+        {
+          "round": 14,
+          "drafts_proposed": 4,
+          "drafts_accepted": 3,
+          "per_position_accept": [
+            true,
+            true,
+            true,
+            false
+          ],
+          "per_position_target_top": [
+            20166,
+            311,
+            279,
+            17711
+          ],
+          "per_position_draft_top": [
+            20166,
+            311,
+            279,
+            4627
+          ],
+          "bonus_token_id": 17711,
+          "latency_ms": 1062.8788749454543
+        }
+      ]
+    },
+    {
+      "prompt": "Write a symphony concert review, discussing the orchestra's performance and overall audience experience.",
+      "prompt_token_ids": [
+        7985,
+        264,
+        7886,
+        29648,
+        20830,
+        3395,
+        11,
+        24392,
+        279,
+        68055,
+        594,
+        5068,
+        323,
+        8084,
+        10650,
+        3139,
+        13
+      ],
+      "completion": " Include details about the conductor's direction, the musicians' skill and precision, and the overall atmosphere of the concert. Additionally, provide your personal opinion on the concert's impact and significance, and any standout moments or performances that you particularly enjoyed.",
+      "committed_token_ids": [
+        29734,
+        3565,
+        911,
+        279,
+        60756,
+        594,
+        5106,
+        11,
+        279,
+        31529,
+        6,
+        9947,
+        323,
+        16052,
+        11,
+        323,
+        279,
+        8084,
+        16566,
+        315,
+        279,
+        20830,
+        13,
+        22406,
+        11,
+        3410,
+        697,
+        4345,
+        9459,
+        389,
+        279,
+        20830,
+        594,
+        5421,
+        323,
+        25361,
+        11,
+        323,
+        894,
+        71460,
+        13943,
+        476,
+        23675,
+        429,
+        498,
+        7945,
+        14006,
+        13,
+        1634
+      ],
+      "cumulative_acceptance": 0.3068181818181818,
+      "decode_ms": 20013.5253330227,
+      "prefill_ms": 353.76037505920976,
+      "tokens_per_second_decode": 2.4483442664221213,
+      "steps": [
+        {
+          "round": 0,
+          "drafts_proposed": 4,
+          "drafts_accepted": 0,
+          "per_position_accept": [
+            false
+          ],
+          "per_position_target_top": [
+            29734
+          ],
+          "per_position_draft_top": [
+            576
+          ],
+          "bonus_token_id": 29734,
+          "latency_ms": 683.6404580390081
+        },
+        {
+          "round": 1,
+          "drafts_proposed": 4,
+          "drafts_accepted": 0,
+          "per_position_accept": [
+            false
+          ],
+          "per_position_target_top": [
+            3565
+          ],
+          "per_position_draft_top": [
+            3151
+          ],
+          "bonus_token_id": 3565,
+          "latency_ms": 665.3204170288518
+        },
+        {
+          "round": 2,
+          "drafts_proposed": 4,
+          "drafts_accepted": 0,
+          "per_position_accept": [
+            false
+          ],
+          "per_position_target_top": [
+            911
+          ],
+          "per_position_draft_top": [
+            389
+          ],
+          "bonus_token_id": 911,
+          "latency_ms": 877.2553750313818
+        },
+        {
+          "round": 3,
+          "drafts_proposed": 4,
+          "drafts_accepted": 1,
+          "per_position_accept": [
+            true,
+            false
+          ],
+          "per_position_target_top": [
+            279,
+            60756
+          ],
+          "per_position_draft_top": [
+            279,
+            4627
+          ],
+          "bonus_token_id": 60756,
+          "latency_ms": 664.4553339574486
+        },
+        {
+          "round": 4,
+          "drafts_proposed": 4,
+          "drafts_accepted": 1,
+          "per_position_accept": [
+            true,
+            false
+          ],
+          "per_position_target_top": [
+            594,
+            5106
+          ],
+          "per_position_draft_top": [
+            594,
+            1707
+          ],
+          "bonus_token_id": 5106,
+          "latency_ms": 682.7435420127586
+        },
+        {
+          "round": 5,
+          "drafts_proposed": 4,
+          "drafts_accepted": 2,
+          "per_position_accept": [
+            true,
+            true,
+            false
+          ],
+          "per_position_target_top": [
+            11,
+            279,
+            31529
+          ],
+          "per_position_draft_top": [
+            11,
+            279,
+            4627
+          ],
+          "bonus_token_id": 31529,
+          "latency_ms": 697.4785829661414
+        },
+        {
+          "round": 6,
+          "drafts_proposed": 4,
+          "drafts_accepted": 1,
+          "per_position_accept": [
+            true,
+            false
+          ],
+          "per_position_target_top": [
+            6,
+            9947
+          ],
+          "per_position_draft_top": [
+            6,
+            23675
+          ],
+          "bonus_token_id": 9947,
+          "latency_ms": 669.2103340756148
+        },
+        {
+          "round": 7,
+          "drafts_proposed": 4,
+          "drafts_accepted": 1,
+          "per_position_accept": [
+            true,
+            false
+          ],
+          "per_position_target_top": [
+            323,
+            16052
+          ],
+          "per_position_draft_top": [
+            323,
+            14762
+          ],
+          "bonus_token_id": 16052,
+          "latency_ms": 726.8627079902217
+        },
+        {
+          "round": 8,
+          "drafts_proposed": 4,
+          "drafts_accepted": 3,
+          "per_position_accept": [
+            true,
+            true,
+            true,
+            false
+          ],
+          "per_position_target_top": [
+            11,
+            323,
+            279,
+            8084
+          ],
+          "per_position_draft_top": [
+            11,
+            323,
+            279,
+            14269
+          ],
+          "bonus_token_id": 8084,
+          "latency_ms": 941.4935000240803
+        },
+        {
+          "round": 9,
+          "drafts_proposed": 4,
+          "drafts_accepted": 0,
+          "per_position_accept": [
+            false
+          ],
+          "per_position_target_top": [
+            16566
+          ],
+          "per_position_draft_top": [
+            14269
+          ],
+          "bonus_token_id": 16566,
+          "latency_ms": 1317.9008329752833
+        },
+        {
+          "round": 10,
+          "drafts_proposed": 4,
+          "drafts_accepted": 4,
+          "per_position_accept": [
+            true,
+            true,
+            true,
+            true
+          ],
+          "per_position_target_top": [
+            315,
+            279,
+            20830,
+            13
+          ],
+          "per_position_draft_top": [
+            315,
+            279,
+            20830,
+            13
+          ],
+          "bonus_token_id": 22406,
+          "latency_ms": 910.7059590751305
+        },
+        {
+          "round": 11,
+          "drafts_proposed": 4,
+          "drafts_accepted": 2,
+          "per_position_accept": [
+            true,
+            true,
+            false
+          ],
+          "per_position_target_top": [
+            11,
+            3410,
+            697
+          ],
+          "per_position_draft_top": [
+            11,
+            3410,
+            264
+          ],
+          "bonus_token_id": 697,
+          "latency_ms": 955.4530000314116
+        },
+        {
+          "round": 12,
+          "drafts_proposed": 4,
+          "drafts_accepted": 4,
+          "per_position_accept": [
+            true,
+            true,
+            true,
+            true
+          ],
+          "per_position_target_top": [
+            4345,
+            9459,
+            389,
+            279
+          ],
+          "per_position_draft_top": [
+            4345,
+            9459,
+            389,
+            279
+          ],
+          "bonus_token_id": 20830,
+          "latency_ms": 847.467957995832
+        },
+        {
+          "round": 13,
+          "drafts_proposed": 4,
+          "drafts_accepted": 2,
+          "per_position_accept": [
+            true,
+            true,
+            false
+          ],
+          "per_position_target_top": [
+            594,
+            5421,
+            323
+          ],
+          "per_position_draft_top": [
+            594,
+            5421,
+            389
+          ],
+          "bonus_token_id": 323,
+          "latency_ms": 860.3365829912946
+        },
+        {
+          "round": 14,
+          "drafts_proposed": 4,
+          "drafts_accepted": 0,
+          "per_position_accept": [
+            false
+          ],
+          "per_position_target_top": [
+            25361
+          ],
+          "per_position_draft_top": [
+            897
+          ],
+          "bonus_token_id": 25361,
+          "latency_ms": 900.6297909654677
+        },
+        {
+          "round": 15,
+          "drafts_proposed": 4,
+          "drafts_accepted": 0,
+          "per_position_accept": [
+            false
+          ],
+          "per_position_target_top": [
+            11
+          ],
+          "per_position_draft_top": [
+            304
+          ],
+          "bonus_token_id": 11,
+          "latency_ms": 858.2352079683915
+        },
+        {
+          "round": 16,
+          "drafts_proposed": 4,
+          "drafts_accepted": 2,
+          "per_position_accept": [
+            true,
+            true,
+            false
+          ],
+          "per_position_target_top": [
+            323,
+            894,
+            71460
+          ],
+          "per_position_draft_top": [
+            323,
+            894,
+            18564
+          ],
+          "bonus_token_id": 71460,
+          "latency_ms": 890.2552500367165
+        },
+        {
+          "round": 17,
+          "drafts_proposed": 4,
+          "drafts_accepted": 0,
+          "per_position_accept": [
+            false
+          ],
+          "per_position_target_top": [
+            13943
+          ],
+          "per_position_draft_top": [
+            23675
+          ],
+          "bonus_token_id": 13943,
+          "latency_ms": 1598.208082956262
+        },
+        {
+          "round": 18,
+          "drafts_proposed": 4,
+          "drafts_accepted": 1,
+          "per_position_accept": [
+            true,
+            false
+          ],
+          "per_position_target_top": [
+            476,
+            23675
+          ],
+          "per_position_draft_top": [
+            476,
+            21314
+          ],
+          "bonus_token_id": 23675,
+          "latency_ms": 1074.8122500954196
+        },
+        {
+          "round": 19,
+          "drafts_proposed": 4,
+          "drafts_accepted": 1,
+          "per_position_accept": [
+            true,
+            false
+          ],
+          "per_position_target_top": [
+            429,
+            498
+          ],
+          "per_position_draft_top": [
+            429,
+            14638
+          ],
+          "bonus_token_id": 498,
+          "latency_ms": 1033.1650839652866
+        },
+        {
+          "round": 20,
+          "drafts_proposed": 4,
+          "drafts_accepted": 0,
+          "per_position_accept": [
+            false
+          ],
+          "per_position_target_top": [
+            7945
+          ],
+          "per_position_draft_top": [
+            1035
+          ],
+          "bonus_token_id": 7945,
+          "latency_ms": 1087.4780000885949
+        },
+        {
+          "round": 21,
+          "drafts_proposed": 4,
+          "drafts_accepted": 2,
+          "per_position_accept": [
+            true,
+            true,
+            false
+          ],
+          "per_position_target_top": [
+            14006,
+            13,
+            1634
+          ],
+          "per_position_draft_top": [
+            14006,
+            13,
+            17375
+          ],
+          "bonus_token_id": 1634,
+          "latency_ms": 1070.1653339201584
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "n_prompts": 8,
+    "mean_acceptance": 0.45535218672796074,
+    "mean_tokens_per_second_decode": 2.3910469348839385
+  }
+}

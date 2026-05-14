@@ -1,0 +1,41 @@
+# Node / pnpm / npm
+node_modules/
+dist/
+build/
+.vite/
+*.log
+
+# Python (for simulator)
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Model weights — never commit
+*.bin
+*.safetensors
+*.onnx
+*.gguf
+*.wasm
+*.mlpackage
+weights/
+checkpoints/
+
+# Benchmark artifacts that are large or not meant to ship
+bench/results/raw/
+bench/plots/raw/
+experiments/**/output/
+experiments/**/raw/
+
+# Local environment
+.env
+.env.local

@@ -1,0 +1,22 @@
+[
+  "Compose an engaging travel blog post about a recent trip to Hawaii, highlighting cultural experiences and must-see attractions.",
+  "Draft a professional email seeking your supervisor's feedback on the 'Quarterly Financial Report' you prepared. Ask specifically about the data analysis, presentation style, and the clarity of conclusions drawn. Keep the email short and to the point.",
+  "Imagine you are writing a blog post comparing two popular smartphone models. Develop an outline for the blog post, including key points and subheadings to effectively compare and contrast the features, performance, and user experience of the two models.",
+  "Write a persuasive email to convince your introverted friend, who dislikes public speaking, to volunteer as a guest speaker at a local event. Use compelling arguments and address potential objections. Please be concise.",
+  "Describe a vivid and unique character, using strong imagery and creative language. Please answer in fewer than two paragraphs.",
+  "Write a captivating movie review for a recently released science fiction film, discussing its plot, characters, and special effects.",
+  "Structure a podcast script for an episode discussing the influence of streaming platforms on the music industry.",
+  "Write a symphony concert review, discussing the orchestra's performance and overall audience experience.",
+  "In a survey conducted at a local high school, preferences for a new school color were measured: 58% of students liked blue, 45% preferred green, and 22% liked both colors. If we randomly pick a student from the school, what's the probability that they would like neither blue nor green?",
+  "When rolling two dice, what is the probability that you roll a total number that is at least 3?",
+  "Some people got on a bus at the terminal. At the first bus stop, half of the people got down and 4 more people got in. Then at the second bus stop, 6 people got down and 8 more got in. If there were a total of 25 people heading to the third stop, how many people got on the bus at the terminal?",
+  "x+y = 4z, x*y = 4z^2, express x-y in z",
+  "Implement a program to find the common elements in two arrays without using any extra data structures.",
+  "Given a 0-indexed integer array nums of length n and an integer target, return the number of pairs (i, j) where 0 <= i < j < n and nums[i] + nums[j] < target.",
+  "You are given two sorted lists of size m and n. Implement a function to find the kth smallest element in the union of the two lists with linear complexity.",
+  "Implement a function to find the median of two sorted arrays of different sizes with O(1) space complexity and O(n) time complexity.",
+  "Write a Python function to find the longest common subsequence of two input strings using dynamic programming.",
+  "Help me construct a catchy, yet scientifically accurate, headline for an article on the latest discovery in renewable bio-energy, while carefully handling the ethical dilemmas surrounding bio-energy sources. Propose 4 options.",
+  "Edit the following paragraph to correct any grammatical errors: 'She didn't remembre where is her purse, so I thinks its in the car but he's say it's on kitchen table but he are not sure, and then they asked me to looking for it, she's say, \"Can you?\", and I responds with, \"Maybe, but ain't no sure,\" and he not heard me, and, \"What?\", he asks, \"Did you found it?\".'",
+  "In the context of a survey, design a haiku that contains the words 'silence', 'reflection', and 'crystal'."
+]
