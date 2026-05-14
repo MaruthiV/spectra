@@ -10,12 +10,18 @@
  */
 
 import * as webllm from "@mlc-ai/web-llm";
+import { SpecController, type SpecConfig } from "./SpecController.js";
 
 const STOCK_MODEL_ID = "Qwen2.5-0.5B-Instruct-q4f16_1-MLC";
 const SPECTRA_MODEL_ID = "Spectra-Qwen2.5-0.5B-Instruct-q4f16_1";
 
+const SPECTRA_TARGET_ID = "Spectra-Qwen2.5-1.5B-Instruct-q4f16_1";
+const SPECTRA_DRAFT_ID = "Spectra-Qwen2.5-0.5B-Instruct-q4f16_1";
+
 const HF_WEIGHTS_BASE_URL =
   "https://huggingface.co/mlc-ai/Qwen2.5-0.5B-Instruct-q4f16_1-MLC/resolve/main/";
+const HF_TARGET_WEIGHTS_URL =
+  "https://huggingface.co/mlc-ai/Qwen2.5-1.5B-Instruct-q4f16_1-MLC/resolve/main/";
 
 const PROMPTS = [
   "Compose a haiku about WebGPU running an LLM in the browser.",
@@ -137,15 +143,130 @@ async function runPromptsOn(engine: webllm.MLCEngineInterface): Promise<void> {
     `<span class="stat">${allStats.length} prompts</span>`;
 }
 
-async function dumpFuncs(): Promise<void> {
-  log("PackedFunc dump is unavailable from the public web-llm API. The list");
-  log("of functions exposed by the loaded .wasm is in the model's metadata");
-  log("inside the binary. Use `strings spectra-qwen2_5_0_5b_webgpu.wasm | grep`");
-  log("for an offline check; per Phase 0b we already saw batch_verify there.");
+/**
+ * Phase 4 main event: load 1.5B target + 0.5B draft, run the Spectra
+ * SpecController, report acceptance rate + tok/s.
+ */
+async function runSpec(): Promise<void> {
+  setBusy(true);
+  log(`Setting up spec engine: target=${SPECTRA_TARGET_ID}, draft=${SPECTRA_DRAFT_ID}`);
+
+  // Both models loaded into one engine via successive reloads.
+  const appConfig: webllm.AppConfig = {
+    model_list: [
+      {
+        model: HF_TARGET_WEIGHTS_URL,
+        model_id: SPECTRA_TARGET_ID,
+        model_lib: `${window.location.origin}/spectra-qwen2_5_1_5b_webgpu.wasm`,
+        overrides: { context_window_size: 4096 },
+      },
+      {
+        model: HF_WEIGHTS_BASE_URL,
+        model_id: SPECTRA_DRAFT_ID,
+        model_lib: `${window.location.origin}/spectra-qwen2_5_0_5b_webgpu.wasm`,
+        overrides: { context_window_size: 4096 },
+      },
+    ],
+  };
+
+  const engine = new webllm.MLCEngine({ appConfig, initProgressCallback });
+
+  log(`Loading target (1.5B)…`);
+  const tT0 = performance.now();
+  await engine.reload(SPECTRA_TARGET_ID);
+  log(`  target loaded in ${((performance.now() - tT0) / 1000).toFixed(1)} s`);
+
+  log(`Loading draft (0.5B)…`);
+  const tD0 = performance.now();
+  await engine.reload(SPECTRA_DRAFT_ID);
+  log(`  draft loaded in ${((performance.now() - tD0) / 1000).toFixed(1)} s`);
+  log(`Loaded models: ${engine.spectraListLoadedModels().join(", ")}`);
+
+  const target = engine.spectraGetChatPipeline(SPECTRA_TARGET_ID);
+  const draft = engine.spectraGetChatPipeline(SPECTRA_DRAFT_ID);
+  if (!target || !draft) {
+    log("ERROR: failed to retrieve pipelines from engine");
+    setBusy(false);
+    return;
+  }
+
+  // Check batch_verify availability on the target.
+  const fbatchVerify = target.spectraGetPackedFunc("batch_verify");
+  log(`target.batch_verify PackedFunc resolved: ${fbatchVerify ? "yes ✓" : "NO ✗"}`);
+  log(`target vocab=${target.spectraGetVocabSize()}, draft vocab=${draft.spectraGetVocabSize()}`);
+
+  const cfg: SpecConfig = {
+    draftLength: 2,
+    maxTokens: 64,
+    onStep: (e) => {
+      const pat = e.committed
+        .map((_, i) => (i < e.accepted ? "✓" : "·"))
+        .join("");
+      log(
+        `  round: drafts=[${e.drafts.join(",")}] accepted=${e.accepted}/${e.drafts.length} ${pat} committed=${e.committed.length} ${e.latencyMs.toFixed(0)}ms`,
+      );
+    },
+  };
+
+  const allStats: { decode: number; tokens: number; accept: number; rounds: number }[] = [];
+  for (let i = 0; i < PROMPTS.length; i++) {
+    const prompt = PROMPTS[i];
+    log(`[${i + 1}/${PROMPTS.length}] ${prompt.slice(0, 60)}…`);
+
+    // Reset both pipelines' KV between prompts.
+    target.resetChat();
+    draft.resetChat();
+
+    // Tokenize with target's tokenizer (same vocab as draft — Phase 0a A5).
+    const tokenizer = target.spectraGetTokenizer();
+    const promptBytes = new TextEncoder().encode(prompt);
+    const promptTokens = Array.from(tokenizer.encode(prompt));
+    log(`  prompt → ${promptTokens.length} tokens`);
+
+    const ctl = new SpecController(target, draft, cfg);
+    try {
+      const result = await ctl.generate(promptTokens);
+      const text = new TextDecoder().decode(
+        tokenizer.decode(Int32Array.from(result.tokens)),
+      );
+      log(
+        `  → ${result.tokens.length} tokens, ${result.rounds} rounds, accept=${result.cumulativeAcceptance.toFixed(3)}, decode=${result.tokensPerSecond.toFixed(1)} tok/s (${result.decodeMs.toFixed(0)}ms)`,
+      );
+      $("completion").innerText = text;
+      allStats.push({
+        decode: result.tokensPerSecond,
+        tokens: result.tokens.length,
+        accept: result.cumulativeAcceptance,
+        rounds: result.rounds,
+      });
+    } catch (e) {
+      log(`  ERROR during generate: ${e}`);
+      console.error(e);
+      void promptBytes;
+      setBusy(false);
+      return;
+    }
+  }
+
+  const meanDecode = allStats.reduce((s, a) => s + a.decode, 0) / Math.max(allStats.length, 1);
+  const meanAccept = allStats.reduce((s, a) => s + a.accept, 0) / Math.max(allStats.length, 1);
+  log(
+    `\n=== SPECTRA SPEC SUMMARY ===\n` +
+      `prompts: ${allStats.length}\n` +
+      `mean acceptance: ${meanAccept.toFixed(3)}\n` +
+      `mean decode (spec): ${meanDecode.toFixed(1)} tok/s\n` +
+      `\nCompare vs target greedy decode on M3 Pro Chrome (~35 tok/s for 1.5B).\n` +
+      `Speedup = ${(meanDecode / 35).toFixed(2)}× (vs ~35 tok/s reference).\n`,
+  );
+  $("stats").innerHTML =
+    `<span class="stat">spec ${meanDecode.toFixed(1)} tok/s</span>` +
+    `<span class="stat">accept ${meanAccept.toFixed(3)}</span>` +
+    `<span class="stat">${(meanDecode / 35).toFixed(2)}× vs 35 tok/s</span>`;
+  setBusy(false);
 }
 
 function setBusy(busy: boolean): void {
-  for (const id of ["run-stock", "run-spectra", "dump-funcs"] as const) {
+  for (const id of ["run-stock", "run-spectra", "run-spec"] as const) {
     ($(id) as HTMLButtonElement).disabled = busy;
   }
 }
@@ -170,5 +291,5 @@ window.addEventListener("DOMContentLoaded", async () => {
 
   $("run-stock").addEventListener("click", () => runStock().catch((e) => log(`ERROR: ${e}`)));
   $("run-spectra").addEventListener("click", () => runSpectra().catch((e) => log(`ERROR: ${e}`)));
-  $("dump-funcs").addEventListener("click", () => dumpFuncs().catch((e) => log(`ERROR: ${e}`)));
+  $("run-spec").addEventListener("click", () => runSpec().catch((e) => log(`ERROR: ${e}`)));
 });

@@ -17,4 +17,12 @@ export default defineConfig({
   optimizeDeps: {
     exclude: ["@mlc-ai/web-llm"],
   },
+  build: {
+    rollupOptions: {
+      // web-llm references Node-only modules from its WebWorker/ServiceWorker
+      // code paths. The browser bundle doesn't actually use them; they're
+      // dead code after tree-shaking. Mark them external so rollup ignores.
+      external: ["ws", "perf_hooks", "module"],
+    },
+  },
 });
