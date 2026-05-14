@@ -171,15 +171,10 @@ async function runSpec(): Promise<void> {
 
   const engine = new webllm.MLCEngine({ appConfig, initProgressCallback });
 
-  log(`Loading target (1.5B)…`);
+  log(`Loading target (1.5B) + draft (0.5B) together via engine.reload([…])…`);
   const tT0 = performance.now();
-  await engine.reload(SPECTRA_TARGET_ID);
-  log(`  target loaded in ${((performance.now() - tT0) / 1000).toFixed(1)} s`);
-
-  log(`Loading draft (0.5B)…`);
-  const tD0 = performance.now();
-  await engine.reload(SPECTRA_DRAFT_ID);
-  log(`  draft loaded in ${((performance.now() - tD0) / 1000).toFixed(1)} s`);
+  await engine.reload([SPECTRA_TARGET_ID, SPECTRA_DRAFT_ID]);
+  log(`  both loaded in ${((performance.now() - tT0) / 1000).toFixed(1)} s`);
   log(`Loaded models: ${engine.spectraListLoadedModels().join(", ")}`);
 
   const target = engine.spectraGetChatPipeline(SPECTRA_TARGET_ID);
@@ -190,9 +185,26 @@ async function runSpec(): Promise<void> {
     return;
   }
 
-  // Check batch_verify availability on the target.
-  const fbatchVerify = target.spectraGetPackedFunc("batch_verify");
-  log(`target.batch_verify PackedFunc resolved: ${fbatchVerify ? "yes ✓" : "NO ✗"}`);
+  // Diagnostic: probe VM function table on the target.
+  const probe = target.spectraProbeVMFunctions([
+    "prefill",
+    "batch_prefill",
+    "decode",
+    "batch_decode",
+    "embed",
+    "sample_with_top_p",
+    "argsort_probs",
+    "batch_verify",
+    "batch_verifier",
+    "create_tir_paged_kv_cache",
+    "_metadata",
+  ]);
+  const abi = target.spectraGetResolvedABI();
+  log(`target ABI resolved: prefill=${abi.prefill}, decode=${abi.decode}`);
+  log(`target VM function table:`);
+  for (const [k, v] of Object.entries(probe)) {
+    log(`  ${v ? "✓" : "✗"} ${k}`);
+  }
   log(`target vocab=${target.spectraGetVocabSize()}, draft vocab=${draft.spectraGetVocabSize()}`);
 
   const cfg: SpecConfig = {
@@ -225,10 +237,13 @@ async function runSpec(): Promise<void> {
 
     const ctl = new SpecController(target, draft, cfg);
     try {
+      log(`  starting generate...`);
       const result = await ctl.generate(promptTokens);
-      const text = new TextDecoder().decode(
-        tokenizer.decode(Int32Array.from(result.tokens)),
-      );
+      // web-tokenizers' decode() returns a string directly.
+      const decoded = tokenizer.decode(Int32Array.from(result.tokens)) as unknown;
+      const text = typeof decoded === "string"
+        ? decoded
+        : new TextDecoder().decode(decoded as BufferSource);
       log(
         `  → ${result.tokens.length} tokens, ${result.rounds} rounds, accept=${result.cumulativeAcceptance.toFixed(3)}, decode=${result.tokensPerSecond.toFixed(1)} tok/s (${result.decodeMs.toFixed(0)}ms)`,
       );
@@ -240,7 +255,12 @@ async function runSpec(): Promise<void> {
         rounds: result.rounds,
       });
     } catch (e) {
-      log(`  ERROR during generate: ${e}`);
+      const err = e as Error;
+      log(`  ERROR during generate: ${err}`);
+      if (err.stack) {
+        const stackLines = err.stack.split("\n").slice(0, 6);
+        for (const line of stackLines) log(`    at ${line.trim()}`);
+      }
       console.error(e);
       void promptBytes;
       setBusy(false);

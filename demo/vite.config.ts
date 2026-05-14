@@ -1,4 +1,7 @@
 import { defineConfig } from "vite";
+import path from "node:path";
+
+const SHIM = path.resolve(__dirname, "src/shims/node-empty.ts");
 
 export default defineConfig({
   server: {
@@ -17,11 +20,19 @@ export default defineConfig({
   optimizeDeps: {
     exclude: ["@mlc-ai/web-llm"],
   },
+  // Alias web-llm's Node-only deps (used only in worker code paths) to an
+  // empty shim. The browser never reaches the code that uses them at runtime;
+  // we just need module resolution to succeed in both dev and build.
+  resolve: {
+    alias: {
+      ws: SHIM,
+      perf_hooks: SHIM,
+      module: SHIM,
+    },
+  },
   build: {
     rollupOptions: {
-      // web-llm references Node-only modules from its WebWorker/ServiceWorker
-      // code paths. The browser bundle doesn't actually use them; they're
-      // dead code after tree-shaking. Mark them external so rollup ignores.
+      // Belt-and-suspenders for production builds in case alias misses.
       external: ["ws", "perf_hooks", "module"],
     },
   },
