@@ -1,29 +1,26 @@
 /**
- * SpecController — browser-side chain-mode speculative decoding (γ=2, greedy).
+ * SpecController — browser-side chain-mode speculative decoding.
  *
  * Implements Leviathan-2023 single-token speculative decoding using
- * @mlc-ai/web-llm's Spectra fork additions:
+ * the Spectra fork of @mlc-ai/web-llm:
  *   - target.spectraPrefillMultiPosition(tokens, positions) for multi-position logits
  *   - target.spectraTruncateKVCache(n) for rollback on rejection
  *   - draft  ditto
  *
- * MVP semantics (greedy, T=0):
- *   - Draft autoregressively proposes γ tokens.
- *   - Target forwards γ drafts in one batch, returning γ logits.
- *   - Verify position i by comparing target_argmax(logits[i-1]) with draft[i].
- *     For position 0, use the stashed target-last-position logit from before
- *     this round (set by init() and refreshed after each round).
- *   - On first reject k: commit drafts[0..k-1] + target-resample at k.
- *     On full accept: commit drafts[0..γ-1] + bonus from target_argmax(logits[γ-1]).
+ * Key optimization (P4.7-A3 carry-over):
+ *   Instead of (target verify γ tokens) + (target single-forward of lastCommit)
+ *   per round, we BATCH lastCommit with the next round's drafts.
  *
- * Open simplifications carried over from the Python simulator
- * (see scripts/sim/spec_decode_sim.py):
- *   - Greedy only (T=0). Sampled spec decoding uses rejection_sampling
- *     with probs ratios; we'll add it in P4.7.
- *   - Chain mode only (treeWidth = 1). Tree verification is Phase 7.
+ *     Round 0   : feed γ drafts to target.        Get γ logits. Verify.
+ *     Round N≥1 : feed [lastCommit, γ drafts].    Get γ+1 logits.
+ *                 Logit at chunk-pos 0 = predicts d[0] of this round.
+ *                 Logit at chunk-pos i (i≥1) = predicts d[i].
+ *                 Logit at chunk-pos γ = bonus.
  *
- * Correctness oracle: outputs at T=0 must match the target model's greedy
- * decode at ≥99% of positions on MT-Bench-20.
+ *   This eliminates one target single-forward per round (saves ~7-15ms on M3 Pro
+ *   for the 1.5B target).
+ *
+ * MVP semantics: greedy only (T=0), chain only (treeWidth = 1).
  */
 
 import type * as webllm from "@mlc-ai/web-llm";
@@ -32,8 +29,22 @@ export interface SpecConfig {
   readonly draftLength: number;   // γ
   readonly maxTokens: number;
   readonly eosTokenId?: number;
-  /** Logger callback for per-step events. */
   readonly onStep?: (e: SpecStepEvent) => void;
+}
+
+export interface SpecTiming {
+  /** Time spent in the draft proposal loop (γ-1 single forwards). */
+  draftLoopMs: number;
+  /** Time spent in the target's batched multi-position forward. */
+  targetVerifyMs: number;
+  /** Time spent in KV truncations (target + draft). */
+  kvOpsMs: number;
+  /** Time spent in CPU-side argmax over γ × vocab. */
+  argmaxMs: number;
+  /** Time spent feeding lastCommit to the draft model (the per-round overhead we still pay; target uses carry-over). */
+  draftLastCommitMs: number;
+  /** Total wall-clock time for this round. */
+  totalMs: number;
 }
 
 export interface SpecStepEvent {
@@ -41,7 +52,7 @@ export interface SpecStepEvent {
   readonly drafts: number[];
   readonly accepted: number;        // 0..γ
   readonly committed: number[];     // accepted drafts + resample/bonus
-  readonly latencyMs: number;
+  readonly timing: SpecTiming;
 }
 
 export interface SpecResult {
@@ -50,15 +61,13 @@ export interface SpecResult {
   readonly drafted: number;
   readonly accepted: number;
   readonly cumulativeAcceptance: number;
-  /** Wall-clock decoding time in milliseconds (excludes prefill). */
   readonly decodeMs: number;
-  /** Wall-clock prefill time in milliseconds. */
   readonly prefillMs: number;
-  /** Mean decode tok/s (accepted + resampled / decodeMs * 1000). */
   readonly tokensPerSecond: number;
+  /** Aggregated per-section timing (mean ms across rounds). */
+  readonly meanTiming: SpecTiming;
 }
 
-/** Greedy argmax of a Float32Array (logits → token id). */
 function argmax(arr: Float32Array): number {
   let best = 0;
   let bestV = arr[0];
@@ -73,11 +82,14 @@ export class SpecController {
   private target: webllm.LLMChatPipeline;
   private draft: webllm.LLMChatPipeline;
 
-  /** Target's last-position logit, updated after each spec round. */
+  /** Target's last-position logit, valid ONLY at the start of round 0 (after prefill). */
   private targetLastLogit: Float32Array | null = null;
 
-  /** Draft's last-position logit. */
+  /** Draft's last-position logit, refreshed each round (we still pay the lastCommit-forward on draft side). */
   private draftLastLogit: Float32Array | null = null;
+
+  /** The token to prepend to round N≥1's target-verify batch (the carry-over). */
+  private pendingLastCommit: number | null = null;
 
   constructor(
     target: webllm.LLMChatPipeline,
@@ -89,136 +101,139 @@ export class SpecController {
     this.cfg = cfg;
   }
 
-  /**
-   * Prime both models with the prompt. Stashes the last-position logit from
-   * each as the starting point for the spec loop.
-   */
+  /** Prefill both models with the prompt. */
   async prefill(promptTokens: number[]): Promise<{ prefillMs: number }> {
     const t0 = performance.now();
     const lastPos = promptTokens.length - 1;
-    console.log("[Spectra] prefilling target...");
     this.targetLastLogit = await this.target.spectraPrefillMultiPosition(promptTokens, [lastPos]);
-    console.log("[Spectra] target prefill OK, draft logit len =", this.targetLastLogit.length);
-    console.log("[Spectra] prefilling draft...");
     this.draftLastLogit = await this.draft.spectraPrefillMultiPosition(promptTokens, [lastPos]);
-    console.log("[Spectra] draft prefill OK, draft logit len =", this.draftLastLogit.length);
+    this.pendingLastCommit = null;  // round 0 won't carry-over
     return { prefillMs: performance.now() - t0 };
   }
 
-  /**
-   * Run one spec round.
-   *
-   * Precondition: targetLastLogit and draftLastLogit are set (from previous
-   * round's bonus or from prefill). Both KV caches are at the same length L.
-   *
-   * Postcondition: both KVs grown by (accepted + 1); targetLastLogit and
-   * draftLastLogit refreshed to the new last-position logits.
-   */
   async step(): Promise<SpecStepEvent & { eos: boolean }> {
-    if (this.targetLastLogit === null || this.draftLastLogit === null) {
+    if (this.draftLastLogit === null) {
       throw new Error("SpecController.prefill() must be called before step()");
     }
     const γ = this.cfg.draftLength;
-    const t0 = performance.now();
+    const tStart = performance.now();
+    const timing: SpecTiming = {
+      draftLoopMs: 0, targetVerifyMs: 0, kvOpsMs: 0,
+      argmaxMs: 0, draftLastCommitMs: 0, totalMs: 0,
+    };
 
     // 1. Draft autoregressive proposal: d[0] from draftLastLogit, then γ-1 more
-    //    via one-token forwards on draft model. After loop: draft KV at L+γ-1.
+    //    via single-token forwards. After loop: draft KV grew by γ-1.
+    const tDraft0 = performance.now();
     const drafts: number[] = [argmax(this.draftLastLogit)];
     for (let i = 1; i < γ; i++) {
       const logits = await this.draft.spectraPrefillMultiPosition([drafts[i - 1]], [0]);
       drafts.push(argmax(logits));
     }
+    timing.draftLoopMs = performance.now() - tDraft0;
 
-    // 2. Target verifies γ drafts in one batch. Feeds γ tokens; gets γ logits
-    //    at chunk positions 0..γ-1. Chunk position i predicts the token AFTER
-    //    drafts[i] (so cp 0 predicts draft[1], cp γ-1 predicts bonus).
-    //    After this: target KV at L+γ.
-    const positions = Array.from({ length: γ }, (_, i) => i);
-    const tgtLogitsAll = await this.target.spectraPrefillMultiPosition(drafts, positions);
+    // 2. Target verify. CARRY-OVER OPTIMIZATION:
+    //    - Round 0 (pendingLastCommit === null): feed γ drafts. Get γ logits.
+    //      Verify d[0] vs targetLastLogit (from prefill); d[i] vs sliceRow(i-1).
+    //    - Round N≥1 (pendingLastCommit set): feed [pendingLastCommit, ...drafts].
+    //      Get γ+1 logits. Verify d[0] vs sliceRow(0); d[i] vs sliceRow(i).
+    //      The logit at sliceRow(0) is the prediction AFTER pendingLastCommit
+    //      = predicts position L+committed_total_so_far+1 = d[0].
+    const tVerify0 = performance.now();
+    let tgtInputTokens: number[];
+    let nLogitRows: number;
+    if (this.pendingLastCommit === null) {
+      tgtInputTokens = drafts;
+      nLogitRows = γ;
+    } else {
+      tgtInputTokens = [this.pendingLastCommit, ...drafts];
+      nLogitRows = γ + 1;
+    }
+    const positions = Array.from({ length: nLogitRows }, (_, i) => i);
+    const tgtLogitsAll = await this.target.spectraPrefillMultiPosition(tgtInputTokens, positions);
+    timing.targetVerifyMs = performance.now() - tVerify0;
     const vocab = this.target.spectraGetVocabSize();
     const sliceRow = (rowIdx: number): Float32Array =>
       tgtLogitsAll.subarray(rowIdx * vocab, (rowIdx + 1) * vocab);
 
-    // 3. Verify (greedy):
-    //    - drafts[0] vs argmax(targetLastLogit)  (stashed from prior round)
-    //    - drafts[i] vs argmax(tgtLogitsAll[i-1]) for i=1..γ-1
+    // 3. Verify (greedy). The "predict d[i]" logit row depends on whether we
+    //    carried over a token:
+    //      - Round 0:   d[0] vs argmax(targetLastLogit), d[i≥1] vs argmax(sliceRow(i-1))
+    //      - Round N≥1: d[0] vs argmax(sliceRow(0)),      d[i≥1] vs argmax(sliceRow(i))
+    const tArg0 = performance.now();
+    const carryOver = this.pendingLastCommit !== null;
+    const predForDraft = (i: number): Float32Array =>
+      carryOver ? sliceRow(i) : (i === 0 ? this.targetLastLogit! : sliceRow(i - 1));
     let accepted = 0;
-    if (argmax(this.targetLastLogit) === drafts[0]) {
+    if (argmax(predForDraft(0)) === drafts[0]) {
       accepted = 1;
       for (let i = 1; i < γ; i++) {
-        if (argmax(sliceRow(i - 1)) === drafts[i]) accepted++;
+        if (argmax(predForDraft(i)) === drafts[i]) accepted++;
         else break;
       }
     }
 
     // 4. Determine the last committed token (bonus on full accept; resample on partial).
+    //    "Bonus row" is the LAST sliceRow (γ in carry-over mode, γ-1 in round 0).
     let lastCommit: number;
     if (accepted === γ) {
-      // Full accept → bonus from logit at chunk pos γ-1.
-      lastCommit = argmax(sliceRow(γ - 1));
+      const bonusRowIdx = carryOver ? γ : γ - 1;
+      lastCommit = argmax(sliceRow(bonusRowIdx));
     } else {
-      // Partial reject at position `accepted`. The target's logit predicting
-      // that position is:
-      //   - if accepted == 0: the stashed targetLastLogit
-      //   - else: sliceRow(accepted - 1)
-      const rejLogits =
-        accepted === 0 ? this.targetLastLogit : sliceRow(accepted - 1);
-      lastCommit = argmax(rejLogits);
+      // Partial reject at position `accepted`. Logit predicting that position is predForDraft(accepted).
+      lastCommit = argmax(predForDraft(accepted));
     }
+    timing.argmaxMs = performance.now() - tArg0;
     const committed: number[] = drafts.slice(0, accepted).concat([lastCommit]);
 
-    // 5. Sync KVs to length L+accepted, then forward `lastCommit` through both.
-    //    Target: currently at L+γ. Rollback (γ - accepted) → L+accepted.
-    //    Draft:  currently at L+γ-1. Difference to L+accepted = (γ-1) - accepted.
-    //      - If positive: rollback draft by that amount.
-    //      - If zero (i.e. accepted == γ-1): already in sync.
-    //      - If negative (i.e. accepted == γ, full accept): feed drafts[γ-1]
-    //        through draft to reach L+γ (= L+accepted).
-    if (γ - accepted > 0) await this.target.spectraTruncateKVCache(γ - accepted);
+    // 5. KV sync to L+accepted (i.e. just the accepted drafts; lastCommit will be carried over to next round).
+    //    Target fed nLogitRows tokens; rollback to L+accepted means popN of (nLogitRows - accepted).
+    //    Note: in carry-over mode, the first fed token (pendingLastCommit) was at the OLD position L+(prev committed_count). We're committing accepted MORE tokens this round (the matched drafts), so the new total is consistent.
+    //    Draft fed γ-1 tokens; need draft KV at L+accepted. Difference: γ-1 - accepted.
+    const tKV0 = performance.now();
+    const targetRollback = nLogitRows - accepted;  // includes the carryOver token
+    if (targetRollback > 0) await this.target.spectraTruncateKVCache(targetRollback);
     const draftDiff = γ - 1 - accepted;
     if (draftDiff > 0) {
       await this.draft.spectraTruncateKVCache(draftDiff);
     } else if (draftDiff < 0) {
-      // Only possible when accepted === γ. Feed |diff| = 1 token = drafts[γ-1].
+      // Only when accepted === γ. Feed drafts[γ-1] to draft to reach L+γ.
       await this.draft.spectraPrefillMultiPosition([drafts[γ - 1]], [0]);
     }
+    timing.kvOpsMs = performance.now() - tKV0;
 
-    // 6. Both KVs now at L+accepted. Feed lastCommit through both → both at
-    //    L+accepted+1 = L + committed.length, and get the correct next-position
-    //    logits for round N+1.
-    this.targetLastLogit = await this.target.spectraPrefillMultiPosition([lastCommit], [0]);
+    // 6. Stash lastCommit for next round's target carry-over.
+    //    For draft, we still need to advance KV by 1 (feed lastCommit) and
+    //    refresh draftLastLogit so the next round's draft loop can start.
+    this.pendingLastCommit = lastCommit;
+    const tFwd0 = performance.now();
     this.draftLastLogit = await this.draft.spectraPrefillMultiPosition([lastCommit], [0]);
+    timing.draftLastCommitMs = performance.now() - tFwd0;
 
-    const latencyMs = performance.now() - t0;
+    timing.totalMs = performance.now() - tStart;
     const eosId = this.cfg.eosTokenId;
     const eos = eosId !== undefined && committed.some((t) => t === eosId);
-
-    const evt: SpecStepEvent & { eos: boolean } = {
-      round: -1, // caller fills in
-      drafts,
-      accepted,
-      committed,
-      latencyMs,
-      eos,
+    return {
+      round: -1, drafts, accepted, committed, timing, eos,
     };
-    this.cfg.onStep?.(evt);
-    return evt;
   }
 
-  /**
-   * Top-level generation. Prefills, then runs spec rounds until maxTokens
-   * or EOS.
-   */
   async generate(promptTokens: number[]): Promise<SpecResult> {
     const { prefillMs } = await this.prefill(promptTokens);
     const tokens: number[] = [];
     let rounds = 0;
     let drafted = 0;
     let accepted = 0;
+    const accumTiming: SpecTiming = {
+      draftLoopMs: 0, targetVerifyMs: 0, kvOpsMs: 0,
+      argmaxMs: 0, draftLastCommitMs: 0, totalMs: 0,
+    };
     const tDecodeStart = performance.now();
 
     while (tokens.length < this.cfg.maxTokens) {
-      const evt = await this.step();
+      const rawEvt = await this.step();
+      const evt = { ...rawEvt, round: rounds };
+      this.cfg.onStep?.(evt);
       rounds += 1;
       drafted += evt.drafts.length;
       accepted += evt.accepted;
@@ -226,20 +241,30 @@ export class SpecController {
         if (tokens.length >= this.cfg.maxTokens) break;
         tokens.push(t);
       }
+      // Accumulate timings.
+      accumTiming.draftLoopMs += evt.timing.draftLoopMs;
+      accumTiming.targetVerifyMs += evt.timing.targetVerifyMs;
+      accumTiming.kvOpsMs += evt.timing.kvOpsMs;
+      accumTiming.argmaxMs += evt.timing.argmaxMs;
+      accumTiming.draftLastCommitMs += evt.timing.draftLastCommitMs;
+      accumTiming.totalMs += evt.timing.totalMs;
       if (evt.eos) break;
     }
+
     const decodeMs = performance.now() - tDecodeStart;
     const cumulativeAcceptance = drafted > 0 ? accepted / drafted : 0;
     const tokensPerSecond = decodeMs > 0 ? (tokens.length / decodeMs) * 1000 : 0;
+    const meanTiming: SpecTiming = {
+      draftLoopMs: accumTiming.draftLoopMs / Math.max(rounds, 1),
+      targetVerifyMs: accumTiming.targetVerifyMs / Math.max(rounds, 1),
+      kvOpsMs: accumTiming.kvOpsMs / Math.max(rounds, 1),
+      argmaxMs: accumTiming.argmaxMs / Math.max(rounds, 1),
+      draftLastCommitMs: accumTiming.draftLastCommitMs / Math.max(rounds, 1),
+      totalMs: accumTiming.totalMs / Math.max(rounds, 1),
+    };
     return {
-      tokens,
-      rounds,
-      drafted,
-      accepted,
-      cumulativeAcceptance,
-      decodeMs,
-      prefillMs,
-      tokensPerSecond,
+      tokens, rounds, drafted, accepted, cumulativeAcceptance,
+      decodeMs, prefillMs, tokensPerSecond, meanTiming,
     };
   }
 }

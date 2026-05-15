@@ -207,15 +207,18 @@ async function runSpec(): Promise<void> {
   }
   log(`target vocab=${target.spectraGetVocabSize()}, draft vocab=${draft.spectraGetVocabSize()}`);
 
+  const gammaInput = $("gamma") as HTMLInputElement;
+  const gamma = parseInt(gammaInput.value, 10) || 2;
+  log(`Using γ=${gamma} (drafts per spec round)`);
   const cfg: SpecConfig = {
-    draftLength: 2,
+    draftLength: gamma,
     maxTokens: 64,
     onStep: (e) => {
       const pat = e.committed
         .map((_, i) => (i < e.accepted ? "✓" : "·"))
         .join("");
       log(
-        `  round: drafts=[${e.drafts.join(",")}] accepted=${e.accepted}/${e.drafts.length} ${pat} committed=${e.committed.length} ${e.latencyMs.toFixed(0)}ms`,
+        `  r${e.round}: d=[${e.drafts.join(",")}] a=${e.accepted}/${e.drafts.length} ${pat} c=${e.committed.length} | tot=${e.timing.totalMs.toFixed(0)} draft=${e.timing.draftLoopMs.toFixed(0)} verify=${e.timing.targetVerifyMs.toFixed(0)} kv=${e.timing.kvOpsMs.toFixed(0)} arg=${e.timing.argmaxMs.toFixed(0)} drLC=${e.timing.draftLastCommitMs.toFixed(0)}`,
       );
     },
   };
@@ -246,6 +249,10 @@ async function runSpec(): Promise<void> {
         : new TextDecoder().decode(decoded as BufferSource);
       log(
         `  → ${result.tokens.length} tokens, ${result.rounds} rounds, accept=${result.cumulativeAcceptance.toFixed(3)}, decode=${result.tokensPerSecond.toFixed(1)} tok/s (${result.decodeMs.toFixed(0)}ms)`,
+      );
+      const mt = result.meanTiming;
+      log(
+        `     mean per-round: tot=${mt.totalMs.toFixed(1)} draft=${mt.draftLoopMs.toFixed(1)} verify=${mt.targetVerifyMs.toFixed(1)} kv=${mt.kvOpsMs.toFixed(1)} arg=${mt.argmaxMs.toFixed(1)} drLC=${mt.draftLastCommitMs.toFixed(1)} ms`,
       );
       $("completion").innerText = text;
       allStats.push({
@@ -312,4 +319,11 @@ window.addEventListener("DOMContentLoaded", async () => {
   $("run-stock").addEventListener("click", () => runStock().catch((e) => log(`ERROR: ${e}`)));
   $("run-spectra").addEventListener("click", () => runSpectra().catch((e) => log(`ERROR: ${e}`)));
   $("run-spec").addEventListener("click", () => runSpec().catch((e) => log(`ERROR: ${e}`)));
+
+  const gammaInput = $("gamma") as HTMLInputElement;
+  const gammaVal = $("gamma-val");
+  gammaVal.innerText = gammaInput.value;
+  gammaInput.addEventListener("input", () => {
+    gammaVal.innerText = gammaInput.value;
+  });
 });

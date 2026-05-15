@@ -105,6 +105,13 @@
 
     <section>
       <h2>Run</h2>
+      <div class="row" style="margin-bottom: 8px;">
+        <label style="display:flex; align-items:center; gap:8px;">
+          γ (drafts per spec round):
+          <input type="range" id="gamma" min="1" max="5" value="2" style="width:140px;" />
+          <span id="gamma-val" style="font-family:ui-monospace,SF Mono,monospace; min-width:20px;">2</span>
+        </label>
+      </div>
       <div class="row">
         <button id="run-stock">Stock 0.5B greedy baseline</button>
         <button id="run-spectra">Spectra-compiled 0.5B greedy</button>
