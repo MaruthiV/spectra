@@ -47,6 +47,10 @@ image = (
     )
     # flash-attn must build against the right torch/CUDA; the pytorch base already has both.
     .pip_install("flash-attn==2.7.0.post2", extra_options="--no-build-isolation")
+    # Ship shared infra (this file + eagle_head.py) into containers so sibling
+    # job files can `from modal_eagle import app, image, volumes`.
+    # copy=True keeps the image cache reusable across runs.
+    .add_local_python_source("modal_eagle", "eagle_head", copy=True)
 )
 
 # ---------------------------------------------------------------------------
