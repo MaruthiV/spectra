@@ -39,3 +39,6 @@ experiments/**/raw/
 # Local environment
 .env
 .env.local
+
+# Project-internal onboarding notes (kept local, never committed/pushed).
+CLAUDE.md
