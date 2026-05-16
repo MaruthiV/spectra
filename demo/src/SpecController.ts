@@ -186,12 +186,14 @@ export class SpecController {
     timing.argmaxMs = performance.now() - tArg0;
     const committed: number[] = drafts.slice(0, accepted).concat([lastCommit]);
 
-    // 5. KV sync to L+accepted (i.e. just the accepted drafts; lastCommit will be carried over to next round).
-    //    Target fed nLogitRows tokens; rollback to L+accepted means popN of (nLogitRows - accepted).
-    //    Note: in carry-over mode, the first fed token (pendingLastCommit) was at the OLD position L+(prev committed_count). We're committing accepted MORE tokens this round (the matched drafts), so the new total is consistent.
+    // 5. KV sync. After verify, target KV holds γ new positions in round 0, or γ+1 new positions
+    //    in carry-over mode (the leading position is pendingLastCommit, which is COMMITTED state
+    //    from the prior round and must NOT be popped). We want target KV to end with: the carryOver
+    //    token (if any) + `accepted` matched drafts. That means popping γ - accepted positions in
+    //    BOTH modes. (lastCommit is deferred to next round's carry-over and not in KV yet.)
     //    Draft fed γ-1 tokens; need draft KV at L+accepted. Difference: γ-1 - accepted.
     const tKV0 = performance.now();
-    const targetRollback = nLogitRows - accepted;  // includes the carryOver token
+    const targetRollback = γ - accepted;
     if (targetRollback > 0) await this.target.spectraTruncateKVCache(targetRollback);
     const draftDiff = γ - 1 - accepted;
     if (draftDiff > 0) {

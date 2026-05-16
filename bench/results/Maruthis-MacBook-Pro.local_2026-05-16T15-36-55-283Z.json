@@ -1,0 +1,67 @@
+{
+  "schema": 1,
+  "utcStartedAt": "2026-05-16T15:36:55.283Z",
+  "utcEndedAt": "2026-05-16T15:38:31.774Z",
+  "hostname": "Maruthis-MacBook-Pro.local",
+  "platform": "darwin",
+  "arch": "arm64",
+  "cpus": 11,
+  "totalMemMB": 18432,
+  "demoUrl": "http://localhost:5173/",
+  "baselineTokPerSec": 35,
+  "runs": [
+    {
+      "gamma": 2,
+      "perPrompt": [
+        {
+          "prompt": "Compose a haiku about WebGPU running an LLM in the browser.",
+          "tokens": 64,
+          "rounds": 36,
+          "acceptance": 0.403,
+          "tokensPerSecond": 42.2,
+          "decodeMs": 1518,
+          "meanTotalMs": 41.6,
+          "meanDraftLoopMs": 8.2,
+          "meanTargetVerifyMs": 23.1,
+          "meanKVOpsMs": 2.3,
+          "meanArgmaxMs": 0.4,
+          "meanDraftLastCommitMs": 7.5
+        },
+        {
+          "prompt": "Explain rejection-sampling speculative decoding in one parag",
+          "tokens": 64,
+          "rounds": 32,
+          "acceptance": 0.5,
+          "tokensPerSecond": 48.8,
+          "decodeMs": 1312,
+          "meanTotalMs": 40.2,
+          "meanDraftLoopMs": 7.7,
+          "meanTargetVerifyMs": 21.9,
+          "meanKVOpsMs": 2.8,
+          "meanArgmaxMs": 0.3,
+          "meanDraftLastCommitMs": 7.4
+        },
+        {
+          "prompt": "Write five Python list comprehensions, one per line, that ea",
+          "tokens": 64,
+          "rounds": 23,
+          "acceptance": 0.891,
+          "tokensPerSecond": 62.8,
+          "decodeMs": 1019,
+          "meanTotalMs": 43.3,
+          "meanDraftLoopMs": 7.6,
+          "meanTargetVerifyMs": 21.7,
+          "meanKVOpsMs": 6.2,
+          "meanArgmaxMs": 0.4,
+          "meanDraftLastCommitMs": 7.4
+        }
+      ],
+      "meanAcceptance": 0.598,
+      "meanTokensPerSecond": 51.3,
+      "speedupVsBaseline": 1.4657142857142855,
+      "errors": [
+        "[browser-console-error] Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ]
+    }
+  ]
+}

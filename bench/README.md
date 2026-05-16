@@ -19,9 +19,14 @@ In another terminal — run the benchmark:
 ```bash
 cd spectra/bench
 pnpm install         # only needed once
-pnpm bench:install   # downloads Playwright's bundled Chromium (~120 MB; only once)
-pnpm bench
+SPECTRA_CHROME_CHANNEL=chrome SPECTRA_HEADLESS=false pnpm bench
 ```
+
+**System Chrome is required.** Playwright's bundled Chromium WebGPU build does not
+expose `shader-f16`, which the q4f16_1 model needs to compile its shaders. macOS
+headless mode lacks it too — hence both `SPECTRA_CHROME_CHANNEL=chrome` and
+`SPECTRA_HEADLESS=false`. A separate Chrome window pops up (not your normal profile);
+leave it alone, it closes on completion.
 
 Output:
 
@@ -34,7 +39,8 @@ Output:
 |---|---|---|
 | `SPECTRA_DEMO_URL` | `http://localhost:5173/` | Where the demo is served |
 | `SPECTRA_GAMMAS` | `2,3,4` | Comma-separated γ values to sweep |
-| `SPECTRA_HEADLESS` | `true` | Set to `false` to watch the runs in a visible Chrome window |
+| `SPECTRA_HEADLESS` | `true` | macOS: must set to `false` (headless lacks `shader-f16`) |
+| `SPECTRA_CHROME_CHANNEL` | (unset) | macOS: must set to `chrome` (bundled Chromium lacks `shader-f16`) |
 
 ## Result schema (`results/*.json`)
 

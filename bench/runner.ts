@@ -26,8 +26,11 @@ const GAMMAS = (process.env.SPECTRA_GAMMAS ?? "2,3,4")
   .map((s) => parseInt(s.trim(), 10))
   .filter((n) => Number.isInteger(n) && n >= 1 && n <= 8);
 const OUTPUT_DIR = path.join(import.meta.dirname, "results");
-const TIMEOUT_MS = 5 * 60 * 1000;       // 5 min per γ run
+const TIMEOUT_MS = 10 * 60 * 1000;      // 10 min per γ run (cold start + 3 prompts)
 const HEADLESS = process.env.SPECTRA_HEADLESS !== "false";
+// Set to "chrome" to use system Chrome (matches the manual-test environment);
+// leave unset to use Playwright's bundled Chromium.
+const CHROME_CHANNEL = process.env.SPECTRA_CHROME_CHANNEL;
 
 interface PerPromptStat {
   prompt: string;
@@ -143,6 +146,10 @@ async function runOnce(page: Page, gamma: number): Promise<GammaRun> {
   const errors: string[] = [];
   page.on("console", (msg: ConsoleMessage) => {
     if (msg.type() === "error") errors.push(`[browser-console-error] ${msg.text()}`);
+    // Forward all browser console output so we can see what's happening during cold start / decode.
+    if (["error", "warning", "log", "info"].includes(msg.type())) {
+      console.log(`  [page.${msg.type()}] ${msg.text().slice(0, 200)}`);
+    }
   });
 
   console.log(`\n=== γ=${gamma} ===`);
@@ -153,6 +160,7 @@ async function runOnce(page: Page, gamma: number): Promise<GammaRun> {
     const el = document.getElementById("log");
     return el && /WebGPU adapter ready/.test(el.innerText);
   }, undefined, { timeout: 30_000 });
+  console.log("  ✓ WebGPU adapter ready");
 
   // Set γ slider and click spec button.
   await page.evaluate((g) => {
@@ -161,12 +169,29 @@ async function runOnce(page: Page, gamma: number): Promise<GammaRun> {
     input.dispatchEvent(new Event("input", { bubbles: true }));
   }, gamma);
   await page.click("#run-spec");
+  console.log("  ✓ clicked #run-spec");
 
-  // Wait for summary line in the log.
-  await page.waitForFunction(() => {
-    const el = document.getElementById("log");
-    return el && /=== SPECTRA SPEC SUMMARY ===/.test(el.innerText);
-  }, undefined, { timeout: TIMEOUT_MS });
+  // Poll #log every 20s so we can see progress, until the summary appears or timeout.
+  const pollHandle = setInterval(async () => {
+    try {
+      const tail = await page.evaluate(() => {
+        const el = document.getElementById("log");
+        if (!el) return "(no #log element)";
+        const lines = el.innerText.trim().split("\n");
+        return lines.slice(-3).join(" | ");
+      });
+      console.log(`  [poll] ${tail.slice(0, 240)}`);
+    } catch (_e) { /* page may be navigating */ }
+  }, 20_000);
+
+  try {
+    await page.waitForFunction(() => {
+      const el = document.getElementById("log");
+      return el && /=== SPECTRA SPEC SUMMARY ===/.test(el.innerText);
+    }, undefined, { timeout: TIMEOUT_MS });
+  } finally {
+    clearInterval(pollHandle);
+  }
 
   const rawLog = await page.evaluate(() => {
     const el = document.getElementById("log");
@@ -204,9 +229,15 @@ async function main(): Promise<void> {
   const utcStartedAt = new Date().toISOString();
   const browser = await chromium.launch({
     headless: HEADLESS,
+    channel: CHROME_CHANNEL,    // undefined → bundled Chromium; "chrome" → system Chrome stable
     args: [
       "--enable-unsafe-webgpu",
-      "--enable-features=Vulkan",
+      // f16 WGSL extension is required by q4f16_1 model weights.
+      "--enable-features=Vulkan,WebGPUShaderF16",
+      "--enable-dawn-features=allow_unsafe_apis",
+      // Required: fresh Playwright profile gets tiny default IndexedDB quota,
+      // and the 1.5B + 0.5B model weights (~1.3 GB combined) blow through it.
+      "--unlimited-storage",
       // For Linux GPU containers (Modal etc.) — these are no-ops on macOS.
       "--use-vulkan=swiftshader",
       "--no-sandbox",
@@ -220,6 +251,19 @@ async function main(): Promise<void> {
       try {
         const run = await runOnce(page, g);
         runs.push(run);
+      } catch (err) {
+        // One γ crashing (e.g. exceeds the model's compiled prefill_chunk_size)
+        // shouldn't drop the whole sweep — record it and continue.
+        const msg = err instanceof Error ? err.message : String(err);
+        console.error(`  ✗ γ=${g} failed: ${msg.slice(0, 200)}`);
+        runs.push({
+          gamma: g,
+          perPrompt: [],
+          meanAcceptance: NaN,
+          meanTokensPerSecond: NaN,
+          speedupVsBaseline: NaN,
+          errors: [msg],
+        });
       } finally {
         await page.context().close();
       }

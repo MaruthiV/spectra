@@ -1,0 +1,118 @@
+{
+  "schema": 1,
+  "utcStartedAt": "2026-05-16T15:40:12.208Z",
+  "utcEndedAt": "2026-05-16T15:43:24.511Z",
+  "hostname": "Maruthis-MacBook-Pro.local",
+  "platform": "darwin",
+  "arch": "arm64",
+  "cpus": 11,
+  "totalMemMB": 18432,
+  "demoUrl": "http://localhost:5173/",
+  "baselineTokPerSec": 35,
+  "runs": [
+    {
+      "gamma": 2,
+      "perPrompt": [
+        {
+          "prompt": "Compose a haiku about WebGPU running an LLM in the browser.",
+          "tokens": 64,
+          "rounds": 36,
+          "acceptance": 0.403,
+          "tokensPerSecond": 41.9,
+          "decodeMs": 1529,
+          "meanTotalMs": 41.9,
+          "meanDraftLoopMs": 8.3,
+          "meanTargetVerifyMs": 23.2,
+          "meanKVOpsMs": 2.4,
+          "meanArgmaxMs": 0.3,
+          "meanDraftLastCommitMs": 7.6
+        },
+        {
+          "prompt": "Explain rejection-sampling speculative decoding in one parag",
+          "tokens": 64,
+          "rounds": 32,
+          "acceptance": 0.5,
+          "tokensPerSecond": 48.7,
+          "decodeMs": 1315,
+          "meanTotalMs": 40.3,
+          "meanDraftLoopMs": 7.7,
+          "meanTargetVerifyMs": 22,
+          "meanKVOpsMs": 2.8,
+          "meanArgmaxMs": 0.3,
+          "meanDraftLastCommitMs": 7.5
+        },
+        {
+          "prompt": "Write five Python list comprehensions, one per line, that ea",
+          "tokens": 64,
+          "rounds": 23,
+          "acceptance": 0.891,
+          "tokensPerSecond": 61.5,
+          "decodeMs": 1041,
+          "meanTotalMs": 44.2,
+          "meanDraftLoopMs": 7.9,
+          "meanTargetVerifyMs": 21.9,
+          "meanKVOpsMs": 6.4,
+          "meanArgmaxMs": 0.4,
+          "meanDraftLastCommitMs": 7.6
+        }
+      ],
+      "meanAcceptance": 0.598,
+      "meanTokensPerSecond": 50.7,
+      "speedupVsBaseline": 1.4485714285714286,
+      "errors": [
+        "[browser-console-error] Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ]
+    },
+    {
+      "gamma": 3,
+      "perPrompt": [
+        {
+          "prompt": "Compose a haiku about WebGPU running an LLM in the browser.",
+          "tokens": 64,
+          "rounds": 32,
+          "acceptance": 0.354,
+          "tokensPerSecond": 38.5,
+          "decodeMs": 1660,
+          "meanTotalMs": 51.3,
+          "meanDraftLoopMs": 15.8,
+          "meanTargetVerifyMs": 25.8,
+          "meanKVOpsMs": 1.6,
+          "meanArgmaxMs": 0.4,
+          "meanDraftLastCommitMs": 7.6
+        },
+        {
+          "prompt": "Explain rejection-sampling speculative decoding in one parag",
+          "tokens": 64,
+          "rounds": 31,
+          "acceptance": 0.355,
+          "tokensPerSecond": 40.7,
+          "decodeMs": 1573,
+          "meanTotalMs": 49.9,
+          "meanDraftLoopMs": 15.4,
+          "meanTargetVerifyMs": 24.8,
+          "meanKVOpsMs": 2,
+          "meanArgmaxMs": 0.4,
+          "meanDraftLastCommitMs": 7.3
+        },
+        {
+          "prompt": "Write five Python list comprehensions, one per line, that ea",
+          "tokens": 64,
+          "rounds": 19,
+          "acceptance": 0.825,
+          "tokensPerSecond": 60.7,
+          "decodeMs": 1054,
+          "meanTotalMs": 54.5,
+          "meanDraftLoopMs": 15.4,
+          "meanTargetVerifyMs": 24.8,
+          "meanKVOpsMs": 6.5,
+          "meanArgmaxMs": 0.5,
+          "meanDraftLastCommitMs": 7.3
+        }
+      ],
+      "meanAcceptance": 0.511,
+      "meanTokensPerSecond": 46.7,
+      "speedupVsBaseline": 1.3342857142857143,
+      "errors": []
+    }
+  ]
+}
