@@ -19,7 +19,12 @@
     "tensor_parallel_shards": 1,
     "head_dim": 128,
     "dtype": "float32",
-    "max_batch_size": 128
+    "max_batch_size": 128,
+    "spectra_aux_layer_ids": [
+      1,
+      13,
+      24
+    ]
   },
   "vocab_size": 151936,
   "context_window_size": 40960,
