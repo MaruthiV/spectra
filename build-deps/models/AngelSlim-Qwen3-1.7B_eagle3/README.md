@@ -1,0 +1,1026 @@
+---
+tags:
+- qwen3
+- eagle3
+- eagle
+---
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/Tencent/AngelSlim/blob/main/docs/source/assets/logos/angelslim_logo_light.png?raw=true">
+    <img alt="AngelSlim" src="https://github.com/Tencent/AngelSlim/blob/main/docs/source/assets/logos/angelslim_logo.png?raw=true" width=55%>
+  </picture>
+</p>
+
+<h3 align="center">
+Dedicated to building a more intuitive, comprehensive, and efficient LLMs compression toolkit.
+</h3>
+
+<p align="center">
+          📖 <a href="https://angelslim.readthedocs.io/">Documentation</a>&nbsp&nbsp | &nbsp&nbsp🤗 <a href="https://huggingface.co/AngelSlim">Hugging Face</a>&nbsp&nbsp | &nbsp&nbsp🤖 <a href="https://modelscope.cn/organization/AngelSlim">ModelScope</a>&nbsp&nbsp | &nbsp&nbsp💬 <a href="./docs/source/assets/angel_slim_wechat.png">WeChat</a>
+<br>
+</p>
+
+
+## 📣Latest News
+- [26/01/13] We have released v0.3. We support the training and deployment of Eagle3 for all-scale LLMs/VLMs/Audio models, as detailed in the [guidance documentation](https://angelslim.readthedocs.io/zh-cn/latest/features/speculative_decoding/eagle/index.html). And We released **Sherry**, the hardware-efficient 1.25 bit quantization algorithm [Paper Comming soon] | [[Code]](https://github.com/Tencent/AngelSlim/tree/sherry/Sherry)🔥🔥🔥
+- [25/11/05] We have released v0.2. Quantization support for new models, such as `GLM-4.6`, `Qwen3-VL` and `Qwen3-Omni`, open-sources the Eagle3 speculative decoding training framework, and updates the Diffusion model quantization tools.
+- [25/09/30] We have released **SpecExit**, the reasoning early-exit algorithm: [[Paper]](http://arxiv.org/abs/2509.24248) | [[Docs]](https://angelslim.readthedocs.io/zh-cn/latest/features/speculative_decoding/spec_exit.html) | [[vLLM Code]](https://github.com/vllm-project/vllm/pull/27192)
+- [25/09/26] We have released **TEQUILA**, the ternary quantization algorithm [[Paper]](https://arxiv.org/abs/2509.23809) | [[Code]](https://github.com/Tencent/AngelSlim/tree/tequila/TernaryQuant)
+- [25/09/24] We now support the PTQ quantization of NVFP4 for the Qwen3 series models. We also opensource [Qwen3-32B-NVFP4](https://huggingface.co/AngelSlim/Qwen3-32B_nvfp4) and [Qwen3-235B-A22B-NVFP4](https://huggingface.co/AngelSlim/Qwen3-235B-A22B_nvfp4) weights.
+
+<details>
+<summary>Previous News</summary>
+
+- [25/09/01] We now support ​FP8 quantization​ of the [Hunyuan-MT-7B](https://huggingface.co/tencent/Hunyuan-MT-7B-fp8) translation model. And enabled ​Torch inference and Benchmark evaluation​ for Eagle3. And implemented support for ​quantization and Cache​ for [FLUX](https://github.com/Tencent/AngelSlim/tree/main/configs/flux). And support ​quantization​ for the [Seed-OSS](https://github.com/Tencent/AngelSlim/tree/main/configs/seed_oss).
+- [25/08/06] We now support quantization for `Hunyuan 0.5B/1.8B/4B/7B` and multimodal model `Qwen2.5VL 3B/7B/32B/72B`, including `FP8/INT4` algorithms, and quantization for `DeepSeek-R1/V3` and `Kimi-K2`, including `FP8-Static` and `W4A8-FP8` algorithms. We also opensource `Hunyuan 1.8B/4B/7B` series Eagle3 model weight.
+- [25/07/04] We now support quantization for `Hunyuan/Qwen2.5/Qwen3/DeepSeek-R1-Distill-Qwen` and other models, including `INT8/FP8/INT4` algorithms. We also opensource `Qwen3` series Eagle3 model weight.
+
+</details>
+
+## 🌟Key Features
+
+- **Highly Integrated**: This toolkit integrates mainstream compression algorithms into a unified framework, offering developers one-click access with exceptional ease of use.
+- **Continuous Innovation**: Beyond integrating widely-used industry algorithms, we are continuously researching better compression algorithms, which will be gradually open-sourced in the future.
+- **Performance-Driven**: We continuously optimize end-to-end performance in model compression workflows and algorithm deployment, such as enabling quantization of models like Qwen3-235B and DeepSeek-R1 on a single GPU.
+
+## 💼Technical Overview
+
+<table>
+  <thead>
+    <tr>
+      <th rowspan="2" style="text-align: center; vertical-align: middle;">Scenario</th>
+      <th rowspan="2" style="text-align: center; vertical-align: middle;">Model</th>
+      <th colspan="3" style="text-align: center; vertical-align: middle;">Compression Strategy</th>
+    </tr>
+    <tr>
+      <th style="text-align: center; vertical-align: middle;">Quantization</th>
+      <th style="text-align: center; vertical-align: middle;">Speculative Decoding</th>
+      <th style="text-align: center; vertical-align: middle;">Other Techniques</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Large Language Models (LLMs)</strong></td>
+      <td>
+        <ul style="padding-left: 0; list-style-position: inside;">
+          <li><a href="https://huggingface.co/collections/tencent/hunyuan-dense-model">Hunyuan-Dense</a></li>
+          <li><a href="https://huggingface.co/collections/tencent/hunyuan-a13b">Hunyuan-MoE</a></li>
+          <li><a href="https://huggingface.co/collections/AngelSlim/qwen3-quant-68652e26da31740739d154f8">Qwen3</a></a></li>
+          <li><a href="https://huggingface.co/AngelSlim/DeepSeek-R1-0528_w4a8_fp8">DeepSeek-V3/R1</a></li>
+          <li><a href="https://huggingface.co/AngelSlim/Glm4_6-fp8_static">GLM-4.6</a></li>
+          <li><a href="https://huggingface.co/collections/AngelSlim/qwen2-25-quant-68652d6cbdf5c0d4b1c4499a">Qwen2.5</a></li>
+        </ul>
+      </td>
+      <td>
+        <ul style="padding-left: 0; list-style-position: inside;">
+          <li><a href="https://github.com/Tencent/AngelSlim/tree/main/configs/qwen3">FP8-Static/Dynamic</a></li>
+          <li><a href="https://github.com/Tencent/AngelSlim/tree/main/configs/qwen3">INT8-Dynamic</a></li>
+          <li><a href="https://github.com/Tencent/AngelSlim/tree/main/configs/qwen3">INT4-GPTQ/AWQ/GPTAQ</a></li>
+          <li><a href="https://github.com/Tencent/AngelSlim/tree/d55b06aeffc53e31f485044c5026e754f4e27b74/configs/qwen3/nvfp4">NVFP4</a></li>
+          <li><a href="https://angelslim.readthedocs.io/zh-cn/latest/features/quantization/fp8_lepto.html">LeptoQuant</a></li>
+          <li><a href="https://github.com/Tencent/AngelSlim/tree/tequila/TernaryQuant">Tequila</a></li>
+        </ul>
+      </td>
+      <td>
+        <ul style="padding-left: 0; list-style-position: inside;">
+          <li><a href="https://angelslim.readthedocs.io/zh-cn/latest/features/speculative_decoding/eagle/index.html">Eagle3</a></li>
+          <li><a href="https://angelslim.readthedocs.io/zh-cn/latest/features/speculative_decoding/spec_exit.html">SpecExit</a></li>
+        </ul>
+      </td>
+      <td>
+        <ul style="padding-left: 0; list-style-position: inside;">
+          <li>
+            <strong>Sparse Attention</strong>
+            <ul style="padding-left: 1.5rem">
+              <li>Under Development</li>
+            </ul>
+          </li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td><strong>Vision Language Models (VLMs)</strong></td>
+      <td>
+        <ul style="padding-left: 0; list-style-position: inside;">
+          <li><a href="">Hunyuan-VL</a></li>
+          <li><a href="https://huggingface.co/tencent/HunyuanOCR">HunyuanOCR</a></li>
+          <li><a href="https://huggingface.co/collections/Qwen/qwen3-vl">Qwen3-VL</a></li>
+          <li><a href="https://huggingface.co/collections/Qwen/qwen25-vl">Qwen2.5-VL</a></li>
+        </ul>
+      </td>
+      <td>
+        <ul style="padding-left: 0; list-style-position: inside;">
+          <li><a href="https://github.com/Tencent/AngelSlim/tree/main/configs/qwen3_vl">FP8-Static/Dynamic</a></li>
+          <li><a href="https://github.com/Tencent/AngelSlim/tree/main/configs/qwen2_5_vl">INT8-Dynamic</a></li>
+          <li><a href="https://github.com/Tencent/AngelSlim/tree/main/configs/qwen2_5_vl">INT4-GPTQ/AWQ/GPTAQ</a></li>
+        </ul>
+      </td>
+      <td>
+        <ul style="padding-left: 0; list-style-position: inside;">
+          <li><a href="https://angelslim.readthedocs.io/zh-cn/latest/features/speculative_decoding/eagle/index.html">Eagle3</a></li>
+        </ul>
+      </td>
+      <td>
+        <ul style="padding-left: 0; list-style-position: inside;">
+          <li>
+            <strong>Token Pruning</strong>
+            <ul style="padding-left: 1.5rem">
+              <li>Under Development</li>
+            </ul>
+          </li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td><strong>Diffusion Models</strong></td>
+      <td>
+        <ul style="padding-left: 0; list-style-position: inside;">
+          <li><a href="https://huggingface.co/collections/tencent/hunyuanimage">Hunyuan-Image</a></li>
+          <li><a href="https://huggingface.co/tencent/HunyuanVideo">Hunyuan-Video</a></li>
+          <li><a href="https://huggingface.co/collections/tencent/hunyuan3d">Hunyuan-3D</a></li>
+          <li><a href="https://huggingface.co/collections/Qwen/qwen-image">Qwen-Image</a></li>
+          <li><a href="https://huggingface.co/collections/black-forest-labs/flux1">FLUX</a></li>
+          <li><a href="https://huggingface.co/collections/Wan-AI/wan21">Wan</a></li>
+          <li><a href="https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0">SDXL</a></li>
+        </ul>
+      </td>
+      <td>
+        <ul style="padding-left: 0; list-style-position: inside;">
+          <li><a href="https://angelslim.readthedocs.io/zh-cn/latest/features/diffusion/quantization.html">FP8-Dynamic</a></li>
+          <li><a href="https://angelslim.readthedocs.io/zh-cn/latest/features/diffusion/quantization.html">FP8-Weight-Only</a></li>
+        </ul>
+      </td>
+      <td>-</td>
+      <td>
+        <ul style="padding-left: 0; list-style-position: inside;">
+          <li>
+            <strong>Cache</strong>
+            <ul style="padding-left: 1.5rem">
+              <li><a href="https://angelslim.readthedocs.io/zh-cn/latest/features/diffusion/cache.html">DeepCache</a></li>
+              <li><a href="https://angelslim.readthedocs.io/zh-cn/latest/features/diffusion/cache.html">TeaCache</a></li>
+              <li><a href="https://angelslim.readthedocs.io/zh-cn/latest/features/diffusion/cache.html">TaylorCache</a></li>
+            </ul>
+          </li>
+          <li>
+            <strong>Sparse Attention</strong>
+            <ul style="padding-left: 1.5rem">
+              <li>Under Development</li>
+            </ul>
+          </li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td><strong>Speech Models​ (TTS/ASR)</strong></td>
+      <td>
+        <ul style="padding-left: 0; list-style-position: inside;">
+          <li><a href="https://huggingface.co/collections/Qwen/qwen3-omni">Qwen3-Omni</a></li>
+          <li><a href="https://huggingface.co/collections/Qwen/qwen2-audio">Qwen2-Audio</a></li>
+          <li><a href="https://huggingface.co/FunAudioLLM/Fun-CosyVoice3-0.5B-2512">Fun-CosyVoice3</a></li>
+        </ul>
+      </td>
+      <td>
+        <ul style="padding-left: 0; list-style-position: inside;">
+          <li><a href="https://github.com/Tencent/AngelSlim/blob/main/docs/source/models/qwen3_omni/qwen3_omni_quant.md">FP8-Static/Dynamic</a></li>
+          <li><a href="https://github.com/Tencent/AngelSlim/tree/main/configs/qwen2_audio">INT8-Dynamic</a></li>
+        </ul>
+      </td>
+      <td>
+        <ul style="padding-left: 0; list-style-position: inside;">
+          <li><a href="https://angelslim.readthedocs.io/zh-cn/latest/features/speculative_decoding/eagle/index.html">Eagle3</a></li>
+        </ul>
+      </td>
+      <td>
+        <ul style="padding-left: 0; list-style-position: inside;">
+          <li>
+            <strong>Token Pruning</strong>
+            <ul style="padding-left: 1.5rem">
+              <li>Under Development</li>
+            </ul>
+          </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+## 🛎️How to Use
+
+### 1. Install AngelSlim
+
+We recommend using `pip` to install the latest stable version of `AngelSlim`:
+
+```shell
+pip install angelslim
+```
+
+Alternatively, you can clone the repository and install from source in editable mode:
+
+```shell
+cd AngelSlim && python setup.py install
+```
+
+For more detailed installation instructions, please refer to the [Installation Documentation](https://angelslim.readthedocs.io/zh-cn/latest/getting_started/installation.html).
+
+### 2. Quick Start
+
+#### 2.1 Speculative Decoding
+
+After installing AngelSlim, you can quickly start Eagle3 training with the following scripts:
+
+```shell
+# Start the vLLM server
+bash scripts/speculative/run_vllm_server.sh
+# Generate training data
+bash scripts/speculative/generate_data_for_target_model.sh
+# Perform online training for the Eagle3 model
+bash scripts/speculative/train_eagle3_online.sh
+```
+
+Training and Deployment Guide for Multimodal Model Eagle3—Supporting LLM, VLM, and Audio (ASR & TTS) Models: [LLM](https://angelslim.readthedocs.io/zh-cn/latest/features/speculative_decoding/eagle/eagle.html) | [VLM](https://angelslim.readthedocs.io/zh-cn/latest/features/speculative_decoding/eagle/vlm_eagle.html) | [Audio(ASR)](https://angelslim.readthedocs.io/zh-cn/latest/features/speculative_decoding/eagle/audio_asr_eagle.html) | [Audio(TTS)](https://angelslim.readthedocs.io/zh-cn/latest/features/speculative_decoding/eagle/audio_tts_eagle.html).
+
+#### 2.2 LLM/VLM Model Quantization
+
+After installing `AngelSlim`, you can launch static FP8 quantization for the Qwen3-1.7B model with the following one-command script:
+
+```shell
+python3 tools/run.py -c configs/qwen3/fp8_static/qwen3-1_7b_fp8_static.yaml
+```
+
+This example produces quantized model weights by performing PTQ calibration on a model loaded from HuggingFace.
+
+<details>
+<summary>Code-based Start</summary>
+
+  To perform dynamic `FP8` quantization on `Qwen3-1.7B`:
+
+  ```python
+  from angelslim.engine import Engine
+
+  slim_engine = Engine()
+  # Prepare model
+  slim_engine.prepare_model(model_name="Qwen", model_path="Qwen/Qwen3-1.7B",)
+  # Initialize compressor
+  slim_engine.prepare_compressor("PTQ", default_method="fp8_dynamic")
+  # Compress model
+  slim_engine.run()
+  # Save compressed model
+  slim_engine.save("./output")
+  ```
+
+</details>
+
+For more details, please refer to the [Quick Start Documentation](https://angelslim.readthedocs.io/zh-cn/latest/getting_started/quickstrat.html).
+
+#### 2.3 Diffusion Model Quantization
+
+  Use the `scripts/diffusion/run_diffusion.py` for quantization and inference:
+
+  ```shell
+  # Online quantization and inference
+  python scripts/diffusion/run_diffusion.py \
+    --model-name-or-path black-forest-labs/FLUX.1-schnell \
+    --quant-type fp8-per-tensor \
+    --prompt "A cat holding a sign that says hello world" \
+    --height 1024 --width 1024 --steps 4 --guidance 0.0 --seed 0
+  ```
+  For more quantization inference methods, please refer to [the Diffusion Model Quantization Documentation](https://angelslim.readthedocs.io/zh-cn/latest/features/diffusion/quantization.html).
+
+### 3. Deployment and Testing
+
+#### 3.1 Offline Inference
+
+To test offline inference with a quantized model loaded via `transformers`, run the following command:
+
+```shell
+python scripts/deploy/offline.py $MODEL_PATH "Hello, my name is"
+```
+
+Where `MODEL_PATH` is the path to the quantized model output.
+
+#### 3.2 API Service Deployment
+
+After specifying the quantized model path `MODEL_PATH`, you can deploy an OpenAI-compatible API service using the following LLMs inference frameworks:
+
+- **vLLM**
+
+  Use the following script to launch a [vLLM](https://github.com/vllm-project/vllm) server, recommended version `vllm>=0.8.5.post1`. For MOE INT8 quantized models, vllm>=0.9.0 is required.
+
+  ```shell
+  bash scripts/deploy/run_vllm.sh --model-path $MODEL_PATH --port 8080 -d 0,1,2,3 -t 4 -p 1 -g 0.8 --max-model-len 4096
+  ```
+  Where `-d` is the visible devices, `-t` is tensor parallel size, `-p` is pipeline parallel size, and `-g` is the GPU memory utilization.
+
+- **SGLang**
+
+  Use the following script to launch a [SGLang](https://github.com/sgl-project/sglang) server, recommended version `sglang>=0.4.6.post1`.
+
+  ```shell
+  bash scripts/deploy/run_sglang.sh --model-path $MODEL_PATH --port 8080 -d 0,1,2,3 -t 4 -g 0.8
+  ```
+
+#### 3.3 Service Invocation
+
+Invoke requests via [OpenAI's API format](https://platform.openai.com/docs/api-reference/introduction):
+
+```shell
+bash scripts/deploy/openai.sh -m $MODEL_PATH -p "Hello, my name is" --port 8080 --max-tokens 4096 --temperature 0.7 --top-p 0.8 --top-k 20 --repetition-penalty 1.05 --system-prompt "You are a helpful assistant."
+```
+where `-p` is the input prompt.
+
+#### 3.4 Performance Evaluation
+
+Evaluate the performance of quantized model using [lm-evaluation-harness](https://github.com/EleutherAI/lm-evaluation-harness), recommended version`lm-eval>=0.4.8`
+
+<details>
+<summary>Run script details</summary>
+
+```shell
+bash scripts/deploy/lm_eval.sh -d 0,1 -t 2 -g 0.8 -r $RESULT_PATH -b "auto" --tasks ceval-valid,mmlu,gsm8k,humaneval -n 0 $MODEL_PATH
+```
+where `RESULT_PATH` is the directory for saving test results, `-b` is batch size, `--tasks` specifies the evaluation tasks, and `-n` is the number of few-shot examples.
+
+For more detaileds, please refer to the [Deployment Documentation](https://angelslim.readthedocs.io/zh-cn/latest/deployment/deploy.html).
+
+</details>
+
+## 📈 Benchmark
+
+### 1. Speculative Decoding
+
+We evaluated the Eagle3 model trained by AngelSlim on tasks including code generation, mathematical reasoning, instruction following, text generation, and multimodal understanding using vLLM. The inference acceleration and context length performance of our trained model under the settings of num_speculative_tokens = 2 or 4 are presented as follows, with an accept length of 1.8–3.5 and a maximum speedup of 1.4–1.9×.
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/Tencent/AngelSlim/blob/main/docs/source/assets/speculative_decoding/eagle3_speedup_and_accepted_length.png?raw=true">
+    <img alt="AngelSlim" src="https://github.com/Tencent/AngelSlim/blob/main/docs/source/assets/speculative_decoding/eagle3_speedup_and_accepted_length.png?raw=true" width=70%>
+  </picture>
+</p>
+
+#### 1.1 Qwen3 Series Models
+
+Benchmark results for Qwen3 series models using Eagle3 speculative decoding on vLLM (v0.11.2) across **MT-bench**, **HumanEval**, **GSM8K** and **Alpaca**, using a single NVIDIA H20 GPU (**tp=1, ep=1, num_speculative_tokens=2, batch_size=1, output_len=1024**).
+
+<table>
+  <thead>
+    <tr>
+      <th>Model</th>
+      <th>Method</th>
+      <th colspan="2" style="text-align:center;">GSM8K</th>
+      <th colspan="2" style="text-align:center;">Alpaca</th>
+      <th colspan="2" style="text-align:center;">HumanEval</th>
+      <th colspan="2" style="text-align:center;">MT-bench</th>
+      <th colspan="2" style="text-align:center;">Mean</th>
+    </tr>
+    <tr>
+      <th></th><th></th>
+      <th>throughput (tokens/s)</th><th>accept length</th>
+      <th>throughput (tokens/s)</th><th>accept length</th>
+      <th>throughput (tokens/s)</th><th>accept length</th>
+      <th>throughput (tokens/s)</th><th>accept length</th>
+      <th>throughput (tokens/s)</th><th>accept length</th>
+    </tr>
+  </thead>
+
+  <tbody>
+    <!-- Qwen3-1.7B -->
+    <tr>
+      <td rowspan="2">Qwen3-1.7B</td>
+      <td>Vanilla</td>
+      <td>376.42</td><td>1</td>
+      <td>378.86</td><td>1</td>
+      <td>378.38</td><td>1</td>
+      <td>390.53</td><td>1</td>
+      <td>381.05</td><td>1</td>
+    </tr>
+    <tr>
+      <td><a href="https://huggingface.co/AngelSlim/Qwen3-1.7B_eagle3">Eagle3</a></td>
+      <td>616.9</td><td>2.13</td>
+      <td>653.29</td><td>2.19</td>
+      <td>680.1</td><td>2.2</td>
+      <td>621.44</td><td>2.17</td>
+      <td>642.93</td><td>2.17</td>
+    </tr>
+    <!-- Qwen3-4B -->
+    <tr>
+      <td rowspan="2">Qwen3-4B</td>
+      <td>Vanilla</td>
+      <td>229.05</td><td>1</td>
+      <td>235.29</td><td>1</td>
+      <td>234.66</td><td>1</td>
+      <td>234.04</td><td>1</td>
+      <td>233.26</td><td>1</td>
+    </tr>
+    <tr>
+      <td><a href="https://huggingface.co/AngelSlim/Qwen3-4B_eagle3">Eagle3</a></td>
+      <td>389.35</td><td>2.07</td>
+      <td>395.97</td><td>2.1</td>
+      <td>377.84</td><td>2.08</td>
+      <td>384.6</td><td>2.07</td>
+      <td>386.94</td><td>2.08</td>
+    </tr>
+    <!-- Qwen3-8B -->
+    <tr>
+      <td rowspan="2">Qwen3-8B</td>
+      <td>Vanilla</td>
+      <td>149.63</td><td>1</td>
+      <td>149.93</td><td>1</td>
+      <td>153.85</td><td>1</td>
+      <td>153.81</td><td>1</td>
+      <td>151.81</td><td>1</td>
+    </tr>
+    <tr>
+      <td><a href="https://huggingface.co/AngelSlim/Qwen3-8B_eagle3">Eagle3</a></td>
+      <td>257.32</td><td>2</td>
+      <td>266.69</td><td>2.02</td>
+      <td>244.89</td><td>1.97</td>
+      <td>258.2</td><td>1.97</td>
+      <td>257.52</td><td>1.99</td>
+    </tr>
+    <!-- Qwen3-14B -->
+    <tr>
+      <td rowspan="2">Qwen3-14B</td>
+      <td>Vanilla</td>
+      <td>92.97</td><td>1</td>
+      <td>92.66</td><td>1</td>
+      <td>92.94</td><td>1</td>
+      <td>94.46</td><td>1</td>
+      <td>93.26</td><td>1</td>
+    </tr>
+    <tr>
+      <td><a href="https://huggingface.co/AngelSlim/Qwen3-14B_eagle3">Eagle3</a></td>
+      <td>153.72</td><td>1.87</td>
+      <td>140.46</td><td>1.78</td>
+      <td>144.68</td><td>1.76</td>
+      <td>142.45</td><td>1.74</td>
+      <td>145.33</td><td>1.79</td>
+    </tr>
+    <!-- Qwen3-32B -->
+    <tr>
+      <td rowspan="2">Qwen3-32B</td>
+      <td>Vanilla</td>
+      <td>43.49</td><td>1</td>
+      <td>43.38</td><td>1</td>
+      <td>43.19</td><td>1</td>
+      <td>43.3</td><td>1</td>
+      <td>43.32</td><td>1</td>
+    </tr>
+    <tr>
+      <td><a href="https://huggingface.co/AngelSlim/Qwen3-32B_eagle3">Eagle3</a></td>
+      <td>80.43</td><td>2.01</td>
+      <td>72.49</td><td>1.9</td>
+      <td>71.57</td><td>1.86</td>
+      <td>74.1</td><td>1.86</td>
+      <td>74.1</td><td>1.91</td>
+    </tr>
+    <!-- Qwen3-30B-A3B -->
+    <tr>
+      <td rowspan="2">Qwen3-30B-A3B</td>
+      <td>Vanilla</td>
+      <td>311.84</td><td>1</td>
+      <td>320.43</td><td>1</td>
+      <td>325.77</td><td>1</td>
+      <td>325.42</td><td>1</td>
+      <td>320.87</td><td>1</td>
+    </tr>
+    <tr>
+      <td><a href="https://huggingface.co/AngelSlim/Qwen3-a3B_eagle3">Eagle3</a></td>
+      <td>453.97</td><td>2.1</td>
+      <td>432.45</td><td>2.04</td>
+      <td>428.81</td><td>2.02</td>
+      <td>437.06</td><td>2.01</td>
+      <td>438.07</td><td>2.04</td>
+    </tr>
+
+  </tbody>
+</table>
+
+#### 1.2 VLM Models
+
+##### 1.2.1 Qwen3-VL Series Models
+
+Benchmark results for Qwen3-VL series models using Eagle3 speculative decoding on vLLM (v0.12.0) across language and multimodal tasks, using a single NVIDIA H20 GPU (**tp=1, ep=1, num_speculative_tokens=4, batch_size=1, output_len=1024**).
+
+<table><thead>
+  <tr>
+    <th>Model</th>
+    <th>Method</th>
+    <th colspan="2" style="text-align:center;">GSM8K</th>
+    <th colspan="2" style="text-align:center;">Alpaca</th>
+    <th colspan="2" style="text-align:center;">HumanEval</th>
+    <th colspan="2" style="text-align:center;">MT-bench</th>
+    <th colspan="2" style="text-align:center;">MATH-500</th>
+    <th colspan="2" style="text-align:center;">MMMU</th>
+    <th colspan="2" style="text-align:center;">MMStar</th>
+    <th colspan="2" style="text-align:center;">Mean</th>
+  <tr>
+    <td></td>
+    <td></td>
+    <th>throughput (tokens/s)</th>
+    <th>accept length</th>
+    <th>throughput (tokens/s)</th>
+    <th>accept length</th>
+    <th>throughput (tokens/s)</th>
+    <th>accept length</th>
+    <th>throughput (tokens/s)</th>
+    <th>accept length</th>
+    <th>throughput (tokens/s)</th>
+    <th>accept length</th>
+    <th>throughput (tokens/s)</th>
+    <th>accept length</th>
+    <th>throughput (tokens/s)</th>
+    <th>accept length</th>
+    <th>throughput (tokens/s)</th>
+    <th>accept length</th>
+  </tr>
+  </tr></thead>
+<tbody>
+  <tr>
+    <td rowspan="2">Qwen3-VL-2B-Instruct</td>
+    <td>Vanilla</td>
+    <td>348.55</td>
+    <td>1</td>
+    <td>350.9</td>
+    <td>1</td>
+    <td>346.07</td>
+    <td>1</td>
+    <td>346.31</td>
+    <td>1</td>
+    <td>82.96</td>
+    <td>1</td>
+    <td>83.27</td>
+    <td>1</td>
+    <td>81.63</td>
+    <td>1</td>
+    <td>234.24</td>
+    <td>1</td>
+  </tr>
+  <tr>
+    <td><a href="https://huggingface.co/AngelSlim/Qwen3-VL-2B-Instruct_eagle3">Eagle3</a></td>
+    <td>511.52</td>
+    <td>2.11</td>
+    <td>560.55</td>
+    <td>2.26</td>
+    <td>826.01</td>
+    <td>3.39</td>
+    <td>555.22</td>
+    <td>2.29</td>
+    <td>163.09</td>
+    <td>2.57</td>
+    <td>154.18</td>
+    <td>2.55</td>
+    <td>139.73</td>
+    <td>2.31</td>
+    <td>415.76</td>
+    <td>2.5</td>
+  </tr>
+  <tr>
+    <td rowspan="2">Qwen3-VL-4B-Instruct</td>
+    <td>Vanilla</td>
+    <td>212.87</td>
+    <td>1</td>
+    <td>213.24</td>
+    <td>1</td>
+    <td>211.69</td>
+    <td>1</td>
+    <td>212.1</td>
+    <td>1</td>
+    <td>67.96</td>
+    <td>1</td>
+    <td>65.88</td>
+    <td>1</td>
+    <td>67.75</td>
+    <td>1</td>
+    <td>150.21</td>
+    <td>1</td>
+  </tr>
+  <tr>
+    <td><a href="https://huggingface.co/AngelSlim/Qwen3-VL-4B-Instruct_eagle3">Eagle3</a></td>
+    <td>415.29</td>
+    <td>2.57</td>
+    <td>372.89</td>
+    <td>2.26</td>
+    <td>459.37</td>
+    <td>2.82</td>
+    <td>382.33</td>
+    <td>2.34</td>
+    <td>141.87</td>
+    <td>2.72</td>
+    <td>104.44</td>
+    <td>2.05</td>
+    <td>107.07</td>
+    <td>2.1</td>
+    <td>283.32</td>
+    <td>2.41</td>
+  </tr>
+  <tr>
+    <td rowspan="2">Qwen3-VL-30B-A3B-Instruct</td>
+    <td>Vanilla</td>
+    <td>179.94</td>
+    <td>1</td>
+    <td>184.6</td>
+    <td>1</td>
+    <td>168.68</td>
+    <td>1</td>
+    <td>180.57</td>
+    <td>1</td>
+    <td>31.08</td>
+    <td>1</td>
+    <td>31.51</td>
+    <td>1</td>
+    <td>30.93</td>
+    <td>1</td>
+    <td>115.33</td>
+    <td>1</td>
+  </tr>
+  <tr>
+    <td><a href="https://huggingface.co/AngelSlim/Qwen3-VL-30B-A3B-Instruct_eagle3">Eagle3</a></td>
+    <td>281.93</td>
+    <td>2.82</td>
+    <td>241.42</td>
+    <td>2.13</td>
+    <td>223.05</td>
+    <td>2.57</td>
+    <td>240.47</td>
+    <td>2.19</td>
+    <td>75.31</td>
+    <td>2.79</td>
+    <td>48.47</td>
+    <td>1.78</td>
+    <td>52.57</td>
+    <td>1.94</td>
+    <td>166.17</td>
+    <td>2.32</td>
+  </tr>
+</tbody></table>
+
+##### 1.2.2 HunyuanOCR Model
+
+Benchmark results for HunyuanOCR using Eagle3 speculative decoding on vLLM (v0.13.0) across **[OmniDocBench](https://huggingface.co/datasets/opendatalab/OmniDocBench)** dataset, using a single NVIDIA H20 GPU (**tp=1, ep=1, num_speculative_tokens=4, batch_size=1, output_len=1024**).
+
+<table><thead>
+  <tr>
+    <th>Model</th>
+    <th>Method</th>
+    <th colspan="2" style="text-align:center;">OmniDocBench</th>
+  <tr>
+    <td></td>
+    <td></td>
+    <th>throughput (tokens/s)</th>
+    <th>accept length</th>
+  </tr>
+  </tr></thead>
+<tbody>
+  <tr>
+    <td rowspan="2">Hunyuan-OCR</td>
+    <td>Vanilla</td>
+    <td>70.12</td>
+    <td>1</td>
+  </tr>
+  <tr>
+    <td><a href="https://huggingface.co/AngelSlim/HunyuanOCR_eagle3">Eagle3</a></td>
+    <td>108.1</td>
+    <td>2.08</td>
+  </tr>
+</tbody>
+</table>
+
+#### 1.3 Audio Models
+
+##### 1.3.1 Qwen2-Audio Model
+
+Benchmark results for Qwen2-Audio using Eagle3 speculative decoding on vLLM (v0.12.0) across **[LibriSpeech](https://www.openslr.org/12)** dataset, using a single NVIDIA H20 GPU (**tp=1, ep=1, num_speculative_tokens=4, batch_size=1, output_len=1024**).
+
+<table><thead>
+  <tr>
+    <th>Model</th>
+    <th>Method</th>
+   <th colspan="2" style="text-align:center;">LibriSpeech</th>
+  <tr>
+    <td></td>
+    <td></td>
+    <th>throughput (tokens/s)</th>
+    <th>accept length</th>
+  </tr>
+  </tr></thead>
+<tbody>
+  <tr>
+    <td rowspan="2">Qwen2-Audio</td>
+    <td>Vanilla</td>
+    <td>78.76</td>
+    <td>1</td>
+  </tr>
+  <tr>
+    <td><a href="https://huggingface.co/AngelSlim/Qwen2-Audio-7B-Instruct_eagle3">Eagle3</a></td>
+    <td>146.66</td>
+    <td>3.51</td>
+  </tr>
+</tbody>
+</table>
+
+##### 1.3.2 Fun-CosyVoice3 Model
+
+Benchmark results for Fun-CosyVoice3 using Eagle3 speculative decoding across **[LibriTTS](https://www.openslr.org/60/)** dataset, using a single NVIDIA H20 GPU (**tp=1, ep=1, num_speculative_tokens=4, batch_size=1, output_len=1024**).
+
+<table><thead>
+  <tr>
+    <th>Model</th>
+    <th>Method</th>
+    <th colspan="2" style="text-align:center;">LibriTTS</th>
+  <tr>
+    <td></td>
+    <td></td>
+    <th>throughput (tokens/s)</th>
+    <th>accept length</th>
+  </tr>
+  </tr></thead>
+<tbody>
+  <tr>
+    <td rowspan="2">Fun-CosyVoice3</td>
+    <td>Vanilla</td>
+    <td>-</td>
+    <td>1</td>
+  </tr>
+  <tr>
+    <td><a href="https://huggingface.co/AngelSlim/Fun-CosyVoice3-0.5B-2512_eagle3">Eagle3</a></td>
+    <td>-</td>
+    <td>1.96</td>
+  </tr>
+</tbody>
+</table>
+
+> Adapted for Transformers backend inference, only displays accept length. vLLM speedup ~1.6×, estimated from baseline LLM speedup.
+
+### 2. Quantization
+
+The performance test results for selected models are shown below. For the complete benchmark, refer to the [Benchmark documentation](https://angelslim.readthedocs.io/zh-cn/latest/performance/quantization/benchmarks.html)
+
+#### 2.1 Hunyuan Series Models
+
+Benchmark results for the `Hunyuan-Instruct` model with `FP8`, `INT4-AWQ` and `INT4-GPTQ` quantization algorithms on datasets including`OlympiadBench`, `AIME 2024` and `DROP`:
+
+<table>
+  <thead>
+    <tr><th>Model</th><th>Quantization</th><th>OlympiadBench</th><th>AIME 2024</th><th>DROP</th><th>GPQA-Diamond</th></tr>
+  </thead>
+  <tbody>
+    <tr><td rowspan="4">Hunyuan-A13B-Instruct</td>
+    <td>BF16</td><td>82.7</td><td>87.30</td><td>91.1</td><td>71.2</td></tr>
+    <tr><td>FP8-Static</td><td>83.0</td><td>86.7</td><td>91.1</td><td>-</td></tr>
+    <tr><td>Int4-GPTQ</td><td>82.7</td><td>86.7</td><td>91.1</td><td>-</td></tr>
+    <tr><td>Int4-AWQ</td><td>82.6</td><td>85.6</td><td>91.0</td><td>-</td></tr>
+  </tbody>
+  <tbody>
+    <tr><td rowspan="4">Hunyuan-7B-Instruct</td>
+    <td>BF16</td>          <td>76.5</td><td>81.1</td><td>85.9</td><td>60.1</td></tr>
+    <tr><td>FP8-Static</td><td>76.6</td><td>80.9</td><td>86.0</td><td>60.1</td></tr>
+    <tr><td>Int4-GPTQ</td><td>76.2</td><td>81.0</td><td>85.7</td><td>60.0</td></tr>
+    <tr><td>Int4-AWQ</td><td>76.4</td><td>80.9</td><td>85.9</td><td>60.1</td></tr>
+  </tbody>
+  <tbody>
+    <tr><td rowspan="4">Hunyuan-4B-Instruct</td>
+    <td>BF16</td>          <td>73.1</td><td>78.3</td><td>78.2</td><td>61.1</td></tr>
+    <tr><td>FP8-Static</td><td>73.1</td><td>76.6</td><td>78.3</td><td>60.2</td></tr>
+    <tr><td>Int4-GPTQ</td><td>72.9</td><td>-</td><td>78.1</td><td>58.1</td></tr>
+    <tr><td>Int4-AWQ</td><td>72.8</td><td>-</td><td>78.2</td><td>-</td></tr>
+  </tbody>
+  <tbody>
+    <tr><td rowspan="4">Hunyuan-1.8B-Instruct</td>
+    <td>BF16</td>          <td>63.4</td><td>56.7</td><td>76.7</td><td>47.2</td></tr>
+    <tr><td>FP8-Static</td><td>62.5</td><td>55.2</td><td>75.1</td><td>47.7</td></tr>
+    <tr><td>Int4-GPTQ</td><td>60.9</td><td>-</td><td>73.0</td><td>44.4</td></tr>
+    <tr><td>Int4-AWQ</td><td>61.7</td><td>-</td><td>71.7</td><td>43.6</td></tr>
+  </tbody>
+  <tbody>
+    <tr><td rowspan="4">Hunyuan-0.5B-Instruct</td>
+    <td>BF16</td>          <td>29.6</td><td>17.2</td><td>52.8</td><td>23.3</td></tr>
+    <tr><td>FP8-Static</td><td>29.6</td><td>17.2</td><td>51.6</td><td>22.5</td></tr>
+    <tr><td>Int4-GPTQ</td><td>26.8</td><td>-</td><td>50.9</td><td>23.3</td></tr>
+    <tr><td>Int4-AWQ</td><td>26.3</td><td>-</td><td>48.9</td><td>23.3</td></tr>
+  </tbody>
+</table>
+
+#### 2.2 Qwen3 Series Models
+
+Benchmark results for Qwen3 series models with `FP8-Static`, `FP8-Dynamic`, `INT4-GPTQ`, and `INT4-AWQ` quantization algorithms on datasets including `CEVAL`, `MMLU`, `GSM8K`, and `HUMANEVAL`:
+
+<table>
+  <thead>
+    <tr><th>Model</th><th>Quantization</th><th>CEVAL</th><th>MMLU</th><th>GSM8K</th><th>HUMANEVAL</th></tr>
+  </thead>
+  <tbody>
+    <tr><td rowspan="4">Qwen3-0.6B</td><td>BF16</td><td>45.84</td><td>47.21</td><td>42.99</td><td>19.51</td></tr>
+    <tr><td>FP8-Static</td><td>45.99</td><td>46.87</td><td>38.06</td><td>18.90</td></tr>
+    <tr><td>FP8-Dynamic</td><td>45.99</td><td>46.93</td><td>38.29</td><td>20.73</td></tr>
+    <tr><td>INT8-Dynamic</td><td>45.17</td><td>46.95</td><td>41.17</td><td>21.34</td></tr>
+    <tr><td rowspan="6">Qwen3-8B</td><td>BF16</td><td>79.27</td><td>74.78</td><td>87.79</td><td>63.41</td></tr>
+    <tr><td>FP8-Static</td><td>78.23</td><td>74.79</td><td>86.96</td><td>62.20</td></tr>
+    <tr><td>FP8-Dynamic</td><td>78.45</td><td>74.75</td><td>87.64</td><td>62.80</td></tr>
+    <tr><td>INT8-Dynamic</td><td>78.01</td><td>74.84</td><td>86.96</td><td>67.07</td></tr>
+    <tr><td>INT4-GPTQ</td><td>77.19</td><td>73.26</td><td>86.43</td><td>62.20</td></tr>
+    <tr><td>INT4-AWQ</td><td>76.15</td><td>73.59</td><td>86.96</td><td>63.41</td></tr>
+    <tr><td rowspan="6">Qwen3-14B</td><td>BF16</td><td>83.06</td><td>78.90</td><td>88.40</td><td>55.49</td></tr>
+    <tr><td>FP8-Static</td><td>82.62</td><td>78.57</td><td>89.46</td><td>57.32</td></tr>
+    <tr><td>FP8-Dynamic</td><td>82.24</td><td>78.92</td><td>88.32</td><td>52.44</td></tr>
+    <tr><td>INT8-Dynamic</td><td>81.87</td><td>78.13</td><td>86.28</td><td>56.10</td></tr>
+    <tr><td>INT4-GPTQ</td><td>81.05</td><td>78.02</td><td>87.34</td><td>57.93</td></tr>
+    <tr><td>INT4-AWQ</td><td>82.02</td><td>77.68</td><td>84.23</td><td>61.59</td></tr>
+    <tr><td rowspan="5">Qwen3-32B</td><td>BF16</td><td>86.55</td><td>82.00</td><td>74.53</td><td>37.80</td></tr>
+    <tr><td>FP8-Static</td><td>86.92</td><td>81.78</td><td>70.20</td><td>39.63</td></tr>
+    <tr><td>FP8-Dynamic</td><td>86.55</td><td>81.89</td><td>70.43</td><td>38.41</td></tr>
+    <tr><td>INT4-GPTQ</td><td>86.18</td><td>81.01</td><td>-</td><td>43.29</td></tr>
+    <tr><td>INT4-AWQ</td><td>86.18</td><td>81.54</td><td>-</td><td>36.59</td></tr>
+    <tr><td rowspan="4">Qwen3-30B-A3B</td><td>BF16</td><td>83.66</td><td>79.36</td><td>89.99</td><td>31.71</td></tr>
+    <tr><td>FP8-Static</td><td>83.95</td><td>79.47</td><td>89.01</td><td>31.10</td></tr>
+    <tr><td>FP8-Dynamic</td><td>84.10</td><td>79.40</td><td>89.16</td><td>32.93</td></tr>
+    <tr><td>INT8-Dynamic</td><td>83.36</td><td>79.48</td><td>89.16</td><td>34.15</td></tr>
+    <tr><td rowspan="4">Qwen3-235B-A22B</td><td>BF16</td><td>89.60</td><td>86.28</td><td>85.29</td><td>27.44</td></tr>
+    <tr><td>FP8-Static</td><td>89.67</td><td>86.19</td><td>86.96</td><td>27.44</td></tr>
+    <tr><td>FP8-Dynamic</td><td>89.67</td><td>86.18</td><td>85.22</td><td>28.05</td></tr>
+    <tr><td>INT8-Dynamic</td><td>88.93</td><td>86.20</td><td>86.20</td><td>23.78</td></tr>
+  </tbody>
+</table>
+
+#### 2.3 DeepSeek Series Models
+
+Benchmark results for DeepSeek-R1-0528 series models with `FP8-Block-Wise` and `W4A8-FP8` quantization algorithms on datasets including `GPQA Diamond`、`AIME 2024`、`SimpleQA` and `LiveCodeBench`：
+
+<table>
+  <thead>
+    <tr><th>Model</th><th>Quantization</th><th>GPQA Diamond</th><th>AIME 2024</th><th>SimpleQA</th><th>LiveCodeBench</th></tr>
+  </thead>
+  <tbody>
+    <tr><td rowspan="6">DeepSeek-R1-0528</td><td>FP8-Block-Wise</td><td>78.28</td><td>88.67</td><td>27.8</td><td>77.1</td></tr>
+    <tr><td>W4A8-FP8</td><td>77.37</td><td>88.67</td><td>26.83</td><td>78.86</td></tr>
+  </tbody>
+</table>
+
+<details>
+<summary>Note</summary>
+
+> - The above results are based on the average of 5 test runs deployed with TRT-LLM
+> - The hyperparameters used during evaluation are as follows:
+> ```json
+>{
+>  "top_k": 20,
+>  "top_p": 0.6,
+>  "temperature": 0.7,
+>  "output_seq_len": 32768,
+>  "max_input_seq_len": 16384
+>}
+>```
+
+</details>
+
+#### 2.4 Qwen-VL Series Models
+
+**Qwen3-VL Benchmark**
+
+Benchmark results for Qwen3VL series models with `BF16`、`FP8-Static` and `FP8-Dynamic` quantization algorithms on datasets including `MMMU_VAL`、`DocVQA_VAL` and `ChartQA_TEST`：
+
+<table>
+  <thead>
+    <tr><th>Model</th><th>Quantization</th><th>MMMU_VAL</th><th>DocVQA_VAL</th><th>ChartQA_TEST</th></tr>
+  </thead>
+  <tbody>
+    <tr><td rowspan="3">Qwen3-VL-32B-Instruct</td><td>BF16</td><td>60.11</td><td>96.08</td><td>94.64</td></tr>
+    <tr><td>FP8-Static</td><td>61.22</td><td>96.00</td><td>94.64</td></tr>
+    <tr><td>FP8-Dynamic</td><td>60.78</td><td>96.19</td><td>94.72</td></tr>
+    <tr><td rowspan="2">Qwen3-VL-30B-A3B-Instruct</td><td>BF16</td><td>50.44</td><td>95.28</td><td>95.36</td></tr>
+    <tr><td>FP8-Dynamic</td><td>50.67</td><td>95.25</td><td>95.20</td></tr>
+  </tbody>
+</table>
+
+<details>
+<summary><strong>Qwen2.5VL Benchmark</strong></summary>
+
+Benchmark results for Qwen2.5VL series models with `BF16`、`FP8-Static`、`FP8-Dynamic`、`INT4-GPTQ`、`INT4-AWQ` quantization algorithms on datasets including `MMMU_VAL`、`DocVQA_VAL` and `ChartQA_TEST`：
+
+<table>
+  <thead>
+    <tr><th>Model</th><th>Quantization</th><th>MMMU_VAL</th><th>MMLDocVQA_VALU</th><th>ChartQA_TEST</th></tr>
+  </thead>
+  <tbody>
+    <tr><td rowspan="5">Qwen2.5VL-3B</td><td>BF16</td><td>47.11</td><td>78.57</td><td>80.32</td></tr>
+    <tr><td>FP8-Static</td><td>47.33</td><td>79.34</td><td>79.68</td></tr>
+    <tr><td>FP8-Dynamic</td><td>45.99</td><td>46.93</td><td>38.29</td></tr>
+    <tr><td>INT4-GPTQ</td><td>46.56</td><td>77.20</td><td>78.96</td></tr>
+    <tr><td>INT4-AWQ</td><td>45.78</td><td>-</td><td>79.60</td></tr>
+   <tr><td rowspan="5">Qwen2.5VL-7B</td><td>BF16</td><td>45.44</td><td>89.71</td><td>84.64</td></tr>
+    <tr><td>FP8-Static</td><td>47.00</td><td>89.83</td><td>85.92</td></tr>
+    <tr><td>FP8-Dynamic</td><td>47.22</td><td>89.80</td><td>88.64</td></tr>
+    <tr><td>INT4-GPTQ</td><td>46.67</td><td>90.45</td><td>-</td></tr>
+    <tr><td>INT4-AWQ</td><td>45.67</td><td>89.28</td><td>-</td></tr>
+    <tr><td rowspan="5">Qwen2.5VL-32B</td><td>BF16</td><td>57.00</td><td>90.03</td><td>-</td></tr>
+    <tr><td>FP8-Static</td><td>57.00</td><td>89.88</td><td>-</td></tr>
+    <tr><td>FP8-Dynamic</td><td>56.44</td><td>89.88</td><td>-</td></tr>
+    <tr><td>INT4-GPTQ</td><td>55.22</td><td>89.80 </td><td>-</td></tr>
+    <tr><td>INT4-AWQ</td><td>55.22</td><td>90.30</td><td>-</td></tr>
+    <tr><td rowspan="5">Qwen2.5VL-72B</td><td>BF16</td><td>58.78</td><td>94.39</td><td>85.60</td></tr>
+    <tr><td>FP8-Static</td><td>57.89</td><td>94.41</td><td>85.84</td></tr>
+    <tr><td>FP8-Dynamic</td><td>58.67</td><td>94.38</td><td>85.60</td></tr>
+    <tr><td>INT4-GPTQ</td><td>57.56</td><td>94.46</td><td>86.48</td></tr>
+    <tr><td>INT4-AWQ</td><td>58.78</td><td>94.19</td><td>87.28</td></tr>
+  </tbody>
+</table>
+
+</details>
+
+#### 2.5 Qwen-Omni Series Models
+
+**Qwen3-Omni Text to Text Benchmark**
+
+Benchmark results for Qwen3-Omni series models in BF16, FP8-Static, and FP8-Dynamic on aime25, gpqa_diamond, and mmlu_redux are as follows:
+
+<table>
+  <thead>
+    <tr><th>Model</th><th>Quantization</th><th>aime25</th><th>gpqa_diamond</th><th>mmlu_redux</th></tr>
+  </thead>
+  <tbody>
+    <tr><td rowspan="3">Qwen3-Omni-30B-A3B-Instruct</td><td>BF16</td><td>73.32</td><td>56.77</td><td>88.09</td></tr>
+    <tr><td>FP8-Static</td><td>71.33</td><td>56.57</td><td>87.91</td></tr>
+    <tr><td>FP8-Dynamic</td><td>73.33</td><td>55.15</td><td>88.07</td></tr>
+  </tbody>
+</table>
+
+<details>
+<summary>Note</summary>
+
+> - The above evaluation results were obtained by deploying with the vLLM framework and averaging over 5 runs (vLLM only supports the thinker component).
+> - The hyperparameters used during evaluation are as follows:
+> ```json
+>{
+>  "top_p": 0.95,
+>  "temperature": 0.6,
+>  "do_sample": true,
+>  "max-model-len 65536": 65536
+>}
+>```
+
+</details>
+
+#### 2.6 Other Models
+
+Other models such as GLM-4.6, Qwen2.5, and Seed-OSS have been evaluated on benchmarks like `CEVAL`, `MMLU`, and `GSM8K` using quantization strategies including `FP8-Static`, `FP8-Dynamic`, `INT4-GPTQ`, and `INT4-AWQ`.
+
+<details>
+<summary>Benchmark Experiment Details</summary>
+
+<table>
+  <thead>
+    <tr><th>Model</th><th>Quantization</th><th>CEVAL</th><th>MMLU</th><th>GSM8K</th></tr>
+  </thead>
+  <tbody>
+    <tr><td rowspan="3">Qwen2.5-1.5B-Instruct</td><td>BF16</td><td>67.01</td><td>60.05</td><td>54.28</td></tr>
+    <tr><td>FP8-Static</td><td>66.27</td><td>60.23</td><td>-</td></tr>
+    <tr><td>FP8-Dynamic</td><td>66.79</td><td>60.08</td><td>51.71</td></tr>
+    <tr><td rowspan="5">Qwen2.5-7B-Instruct</td><td>BF16</td><td>81.20</td><td>74.55</td><td>79.98</td></tr>
+    <tr><td>FP8-Static</td><td>81.13</td><td>74.03</td><td>79.30</td></tr>
+    <tr><td>FP8-Dynamic</td><td>80.31</td><td>74.07</td><td>79.00</td></tr>
+    <tr><td>INT4-GPTQ</td><td>79.05</td><td>73.05</td><td>74.75</td></tr>
+    <tr><td>INT4-AWQ</td><td>79.35</td><td>73.22</td><td>79.38</td></tr>
+    <tr><td rowspan="5">Qwen2.5-32B-Instruct</td><td>BF16</td><td>87.30</td><td>83.21</td><td>81.73</td></tr>
+    <tr><td>FP8-Static</td><td>87.59</td><td>83.08</td><td>81.58</td></tr>
+    <tr><td>FP8-Dynamic</td><td>87.30</td><td>83.04</td><td>81.58</td></tr>
+    <tr><td>INT4-GPTQ</td><td>86.70</td><td>82.45</td><td>82.03</td></tr>
+    <tr><td>INT4-AWQ</td><td>87.00</td><td>82.64</td><td>-</td></tr>
+    <tr><td rowspan="5">DeepSeek-R1-Distill-Qwen-7B</td><td>BF16</td><td>53.49</td><td>53.80</td><td>75.74</td></tr>
+    <tr><td>FP8-Static</td><td>53.57</td><td>54.17</td><td>76.19</td></tr>
+    <tr><td>FP8-Dynamic</td><td>52.97</td><td>54.13</td><td>74.15</td></tr>
+    <tr><td>INT4-GPTQ</td><td>51.86</td><td>52.44</td><td>75.89</td></tr>
+    <tr><td>INT4-AWQ</td><td>53.49</td><td>53.70</td><td>-</td></tr>
+    <tr><td rowspan="5">DeepSeek-R1-Distill-Qwen-14B</td><td>BF16</td><td>77.71</td><td>74.28</td><td>85.67</td></tr>
+    <tr><td>FP8-Static</td><td>77.56</td><td>74.66</td><td>86.73</td></tr>
+    <tr><td>FP8-Dynamic</td><td>76.82</td><td>74.63</td><td>87.11</td></tr>
+    <tr><td>INT4-GPTQ</td><td>74.29</td><td>72.37</td><td>84.61</td></tr>
+    <tr><td>INT4-AWQ</td><td>74.81</td><td>73.00</td><td>86.05</td></tr>
+    <tr><td rowspan="5">DeepSeek-R1-Distill-Qwen-32B</td><td>BF16</td><td>84.18</td><td>80.89</td><td>87.41</td></tr>
+    <tr><td>FP8-Static</td><td>83.43</td><td>80.90</td><td>87.57</td></tr>
+    <tr><td>FP8-Dynamic</td><td>83.73</td><td>81.10</td><td>86.43</td></tr>
+    <tr><td>INT4-GPTQ</td><td>84.10</td><td>79.80</td><td>86.73</td></tr>
+    <tr><td>INT4-AWQ</td><td>82.84</td><td>80.15</td><td>87.19</td></tr>
+  </tbody>
+</table>
+
+</details>
+
+## 📝 License
+
+The code for this project is open-sourced under the [License for AngelSlim](LICENSE).
+
+## 🔗 Citation
+
+```
+@software{AngelSlim2025,
+    title={{AngelSlim}},
+    author={Tencent AngelSlim Project Contributors},
+    year={2025},
+    month={6},
+    url={https://github.com/Tencent/AngelSlim},
+}
+```
+
+## 💬 Technical Discussion
+
+* AngelSlim is continuously iterating and new features will be released soon. If you have any questions or suggestions, please open an issue on [GitHub Issues](https://github.com/Tencent/AngelSlim/issues) or join our [WeChat discussion group](https://github.com/Tencent/AngelSlim/blob/main/docs/source/assets/angel_slim_wechat.png?raw=true).
