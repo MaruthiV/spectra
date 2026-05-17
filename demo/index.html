@@ -88,6 +88,85 @@
         color: #0e6cad;
         font-size: 0.85rem;
       }
+      /* Race UI */
+      .race-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-top: 10px;
+      }
+      .race-pane {
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 12px 14px;
+        background: #fff;
+        min-height: 220px;
+        display: flex;
+        flex-direction: column;
+      }
+      .race-pane.winner {
+        border-color: #14a44d;
+        box-shadow: 0 0 0 2px rgba(20, 164, 77, 0.18);
+      }
+      .race-pane-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        margin-bottom: 6px;
+        padding-bottom: 6px;
+        border-bottom: 1px solid #eee;
+      }
+      .race-pane-title {
+        font-weight: 600;
+        font-size: 0.95rem;
+        color: #333;
+      }
+      .race-pane-subtitle {
+        font-size: 0.75rem;
+        color: #888;
+      }
+      .race-pane-stats {
+        font-family: ui-monospace, "SF Mono", monospace;
+        font-size: 0.85rem;
+        color: #0e6cad;
+      }
+      .race-pane-text {
+        font-family: ui-monospace, "SF Mono", monospace;
+        font-size: 0.82rem;
+        line-height: 1.45;
+        background: #f7f9fb;
+        border-radius: 6px;
+        padding: 8px 10px;
+        white-space: pre-wrap;
+        word-break: break-word;
+        flex: 1;
+        overflow-y: auto;
+        max-height: 320px;
+      }
+      .race-winner-banner {
+        margin-top: 12px;
+        padding: 10px 14px;
+        background: #e8f5ec;
+        color: #14a44d;
+        border-radius: 6px;
+        font-weight: 600;
+      }
+      .race-row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        margin-bottom: 8px;
+      }
+      .race-row input[type="text"] {
+        flex: 1;
+        font: inherit;
+        padding: 6px 10px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+      }
+      /* Token accept/bonus colors (Spectra pane only) */
+      .tok-accept { color: #14a44d; }
+      .tok-bonus { color: #0e6cad; }
     </style>
   </head>
   <body>
@@ -104,7 +183,48 @@
     </section>
 
     <section>
-      <h2>Run</h2>
+      <h2>Race: baseline vs ⚡ Spectra (same prompt, same model)</h2>
+      <div class="race-row">
+        <input type="text" id="race-prompt" placeholder="Type a prompt and click Race…" value="Write a Python function that returns the first n Fibonacci numbers as a list." />
+        <button id="run-race">Race</button>
+      </div>
+      <div class="race-row" style="margin-bottom: 4px;">
+        <label style="font-size: 0.85rem; color: #666;">
+          max tokens
+          <input type="number" id="race-max-tokens" value="80" min="16" max="256" style="width: 60px;" />
+        </label>
+        <label style="font-size: 0.85rem; color: #666;">
+          γ
+          <input type="number" id="race-gamma" value="2" min="1" max="3" style="width: 50px;" />
+        </label>
+      </div>
+      <div class="race-grid">
+        <div class="race-pane" id="race-pane-baseline">
+          <div class="race-pane-header">
+            <div>
+              <div class="race-pane-title">Baseline · Qwen2.5-1.5B greedy</div>
+              <div class="race-pane-subtitle">stock WebLLM, one token per target forward</div>
+            </div>
+            <div class="race-pane-stats" id="race-stats-baseline">—</div>
+          </div>
+          <div class="race-pane-text" id="race-text-baseline">(waiting)</div>
+        </div>
+        <div class="race-pane" id="race-pane-spectra">
+          <div class="race-pane-header">
+            <div>
+              <div class="race-pane-title">⚡ Spectra · spec decoding</div>
+              <div class="race-pane-subtitle">1.5B target + 0.5B draft, γ drafts per target forward</div>
+            </div>
+            <div class="race-pane-stats" id="race-stats-spectra">—</div>
+          </div>
+          <div class="race-pane-text" id="race-text-spectra">(waiting)</div>
+        </div>
+      </div>
+      <div id="race-winner-banner"></div>
+    </section>
+
+    <section>
+      <h2>Debug controls</h2>
       <div class="row" style="margin-bottom: 8px;">
         <label style="display:flex; align-items:center; gap:8px;">
           γ (drafts per spec round):

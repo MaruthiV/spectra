@@ -293,8 +293,201 @@ async function runSpec(): Promise<void> {
 }
 
 function setBusy(busy: boolean): void {
-  for (const id of ["run-stock", "run-spectra", "run-spec"] as const) {
-    ($(id) as HTMLButtonElement).disabled = busy;
+  for (const id of ["run-stock", "run-spectra", "run-spec", "run-race"] as const) {
+    const el = document.getElementById(id) as HTMLButtonElement | null;
+    if (el) el.disabled = busy;
+  }
+}
+
+// ---- Race UI (D5) -----------------------------------------------------------
+// Shared engine (target+draft) lazy-loaded on first race click and cached.
+let cachedSpecEngine: webllm.MLCEngine | null = null;
+let cachedTarget: webllm.LLMChatPipeline | null = null;
+let cachedDraft: webllm.LLMChatPipeline | null = null;
+
+async function ensureSpecEngine(): Promise<{
+  engine: webllm.MLCEngine;
+  target: webllm.LLMChatPipeline;
+  draft: webllm.LLMChatPipeline;
+}> {
+  if (cachedSpecEngine && cachedTarget && cachedDraft) {
+    return { engine: cachedSpecEngine, target: cachedTarget, draft: cachedDraft };
+  }
+  log("[race] loading target+draft engine (one-time, ~30s)…");
+  const appConfig: webllm.AppConfig = {
+    model_list: [
+      {
+        model: HF_TARGET_WEIGHTS_URL,
+        model_id: SPECTRA_TARGET_ID,
+        model_lib: `${window.location.origin}/spectra-qwen2_5_1_5b_webgpu.wasm`,
+        overrides: { context_window_size: 4096 },
+      },
+      {
+        model: HF_WEIGHTS_BASE_URL,
+        model_id: SPECTRA_DRAFT_ID,
+        model_lib: `${window.location.origin}/spectra-qwen2_5_0_5b_webgpu.wasm`,
+        overrides: { context_window_size: 4096 },
+      },
+    ],
+  };
+  const engine = new webllm.MLCEngine({ appConfig, initProgressCallback });
+  await engine.reload([SPECTRA_TARGET_ID, SPECTRA_DRAFT_ID]);
+  const target = engine.spectraGetChatPipeline(SPECTRA_TARGET_ID);
+  const draft = engine.spectraGetChatPipeline(SPECTRA_DRAFT_ID);
+  if (!target || !draft) throw new Error("[race] failed to retrieve pipelines");
+  cachedSpecEngine = engine;
+  cachedTarget = target;
+  cachedDraft = draft;
+  log("[race] engine ready.");
+  return { engine, target, draft };
+}
+
+function argmaxLogits(logits: Float32Array): number {
+  let bestIdx = 0;
+  let bestVal = -Infinity;
+  for (let i = 0; i < logits.length; i++) {
+    if (logits[i] > bestVal) {
+      bestVal = logits[i];
+      bestIdx = i;
+    }
+  }
+  return bestIdx;
+}
+
+/**
+ * Plain greedy decode against the target pipeline. One target forward per token —
+ * this is the "baseline" we're trying to beat.
+ */
+async function runTargetGreedy(
+  target: webllm.LLMChatPipeline,
+  promptTokens: number[],
+  maxTokens: number,
+  onToken: (text: string) => void,
+  eosId: number,
+): Promise<{ tokens: number[]; decodeMs: number; tokPerSec: number }> {
+  target.resetChat();
+  const tokenizer = (target as any).spectraGetTokenizer();
+  // Prefill the full prompt; get logits at last position.
+  let lastLogits = await target.spectraPrefillMultiPosition(
+    promptTokens,
+    [promptTokens.length - 1],
+  );
+  const generated: number[] = [];
+  const tStart = performance.now();
+  for (let i = 0; i < maxTokens; i++) {
+    const tokId = argmaxLogits(lastLogits);
+    if (tokId === eosId) break;
+    generated.push(tokId);
+    const decoded = tokenizer.decode(Int32Array.from([tokId])) as unknown;
+    const text = typeof decoded === "string"
+      ? decoded
+      : new TextDecoder().decode(decoded as BufferSource);
+    onToken(text);
+    // Feed the new token at "current end" position.
+    lastLogits = await target.spectraPrefillMultiPosition([tokId], [0]);
+  }
+  const decodeMs = performance.now() - tStart;
+  return {
+    tokens: generated,
+    decodeMs,
+    tokPerSec: generated.length / (decodeMs / 1000),
+  };
+}
+
+async function runRace(): Promise<void> {
+  setBusy(true);
+  const promptInput = $("race-prompt") as HTMLInputElement;
+  const maxTokInput = $("race-max-tokens") as HTMLInputElement;
+  const gammaInput = $("race-gamma") as HTMLInputElement;
+  const prompt = promptInput.value.trim();
+  if (!prompt) {
+    setBusy(false);
+    return;
+  }
+  const maxTokens = Math.max(16, Math.min(256, parseInt(maxTokInput.value, 10) || 80));
+  const gamma = Math.max(1, Math.min(3, parseInt(gammaInput.value, 10) || 2));
+
+  const baselinePane = $("race-pane-baseline");
+  const spectraPane = $("race-pane-spectra");
+  const baselineText = $("race-text-baseline");
+  const spectraText = $("race-text-spectra");
+  const baselineStats = $("race-stats-baseline");
+  const spectraStats = $("race-stats-spectra");
+  const winnerBanner = $("race-winner-banner");
+
+  // Reset visuals.
+  baselinePane.classList.remove("winner");
+  spectraPane.classList.remove("winner");
+  baselineText.innerText = "";
+  spectraText.innerHTML = "";
+  baselineStats.innerText = "running…";
+  spectraStats.innerText = "queued";
+  winnerBanner.innerText = "";
+  winnerBanner.className = "";
+
+  try {
+    const { target, draft } = await ensureSpecEngine();
+    const tokenizer = target.spectraGetTokenizer();
+    const eosId = 151645;             // Qwen2.5 <|im_end|>
+    const promptTokens = Array.from(tokenizer.encode(prompt));
+
+    // ---------- Baseline run ----------
+    log(`[race] baseline starting (target greedy, max=${maxTokens})…`);
+    const baselineResult = await runTargetGreedy(target, promptTokens, maxTokens, (text) => {
+      baselineText.innerText += text;
+      baselineText.scrollTop = baselineText.scrollHeight;
+    }, eosId);
+    baselineStats.innerText = `${baselineResult.tokPerSec.toFixed(1)} tok/s · ${(baselineResult.decodeMs / 1000).toFixed(2)}s · ${baselineResult.tokens.length} tok`;
+    log(`[race] baseline done: ${baselineResult.tokPerSec.toFixed(1)} tok/s in ${(baselineResult.decodeMs / 1000).toFixed(2)}s`);
+
+    // ---------- Spectra run ----------
+    spectraStats.innerText = "running…";
+    log(`[race] spectra starting (γ=${gamma}, max=${maxTokens})…`);
+    target.resetChat();
+    draft.resetChat();
+    const cfg: SpecConfig = {
+      draftLength: gamma,
+      maxTokens,
+      eosTokenId: eosId,
+      onStep: (e) => {
+        // Render each committed token, color-coded: green = accepted draft, blue = bonus.
+        for (let i = 0; i < e.committed.length; i++) {
+          const tid = e.committed[i];
+          const decoded = tokenizer.decode(Int32Array.from([tid])) as unknown;
+          const text = typeof decoded === "string"
+            ? decoded
+            : new TextDecoder().decode(decoded as BufferSource);
+          const span = document.createElement("span");
+          span.className = i < e.accepted ? "tok-accept" : "tok-bonus";
+          span.innerText = text;
+          spectraText.appendChild(span);
+        }
+        spectraText.scrollTop = spectraText.scrollHeight;
+      },
+    };
+    const ctl = new SpecController(target, draft, cfg);
+    const tStart = performance.now();
+    const specResult = await ctl.generate(promptTokens);
+    const specMs = performance.now() - tStart;
+    spectraStats.innerText = `${specResult.tokensPerSecond.toFixed(1)} tok/s · ${(specMs / 1000).toFixed(2)}s · ${specResult.tokens.length} tok · α=${specResult.cumulativeAcceptance.toFixed(2)}`;
+    log(`[race] spectra done: ${specResult.tokensPerSecond.toFixed(1)} tok/s, α=${specResult.cumulativeAcceptance.toFixed(2)}`);
+
+    // ---------- Winner ----------
+    const speedup = specResult.tokensPerSecond / Math.max(baselineResult.tokPerSec, 1e-3);
+    if (specResult.tokensPerSecond > baselineResult.tokPerSec) {
+      spectraPane.classList.add("winner");
+      winnerBanner.innerText = `⚡ Spectra wins: ${speedup.toFixed(2)}× faster than baseline`;
+      winnerBanner.className = "race-winner-banner";
+    } else {
+      baselinePane.classList.add("winner");
+      winnerBanner.innerText = `Baseline wins (${(1 / speedup).toFixed(2)}× faster than Spectra) — α too low, would need a better draft head.`;
+      winnerBanner.className = "race-winner-banner";
+    }
+  } catch (e) {
+    log(`[race] ERROR: ${e}`);
+    winnerBanner.innerText = `Error: ${e}`;
+  } finally {
+    setBusy(false);
   }
 }
 
@@ -319,6 +512,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   $("run-stock").addEventListener("click", () => runStock().catch((e) => log(`ERROR: ${e}`)));
   $("run-spectra").addEventListener("click", () => runSpectra().catch((e) => log(`ERROR: ${e}`)));
   $("run-spec").addEventListener("click", () => runSpec().catch((e) => log(`ERROR: ${e}`)));
+  $("run-race").addEventListener("click", () => runRace().catch((e) => log(`ERROR: ${e}`)));
 
   const gammaInput = $("gamma") as HTMLInputElement;
   const gammaVal = $("gamma-val");

@@ -8,12 +8,12 @@ This is the **hard gate before C7-C10**: if α < 0.70 on these prompts, the head
 isn't good enough to bother exporting / plumbing through the browser. If 0.70 ≤
 α < 0.75 we'd consider more training; ≥ 0.75 → ship it.
 
-Implementation note: for sim simplicity we use a "fresh-target-hidden" mode for
-EAGLE's draft loop — at each draft step we re-run the target to provide hidden
-states. This slightly OVERESTIMATES α vs the production browser path (where
-EAGLE uses its own running hidden state after the first draft), so a passing
-sim score is a necessary but not sufficient condition. The browser bench (C10)
-is the ground truth.
+Production-faithful draft loop:
+  - The target runs ONCE per spec round (to commit + provide hidden state seed).
+  - Draft step 0: EAGLE consumes target's hidden at last committed position.
+  - Draft steps 1..γ-1: EAGLE consumes ITS OWN trunk output from the previous step
+    as the input hidden state for the next position. This matches the browser path
+    where target is too expensive to re-run during the draft loop.
 
 Cost: a few minutes on H100, ~$1.
 
@@ -102,36 +102,29 @@ def evaluate(checkpoint: str, gamma: int = DEFAULT_GAMMA) -> dict:
         gen_count = 0
 
         while gen_count < GENERATE_TOKENS:
-            # Run target on current committed sequence — get hidden states + next-token logits.
+            # Run target ONCE per spec round — provides the hidden-state seed for EAGLE.
             inp = torch.tensor([committed], device="cuda")           # (1, T)
             with torch.no_grad():
                 out_t = target(input_ids=inp, output_hidden_states=True, use_cache=False, return_dict=True)
-            target_hidden = out_t.hidden_states[-1]                 # (1, T, H) — fp16
-            target_logits = out_t.logits                            # (1, T, V) — fp16
-            # Target's "next-token" prediction (after the full prefix) for verify of d[0].
-            target_pred_for_next = target_logits[0, -1].argmax().item()
+            target_hidden = out_t.hidden_states[-1]                  # (1, T, H) — fp16
 
-            # Build drafts. drafts[i] is EAGLE's prediction for position prefix+i.
-            # We use the simple "re-run-target-per-step" sim mode (overestimates α slightly).
+            # Production-faithful: EAGLE uses its OWN trunk output as hidden_prev for steps 1+.
             drafts: list[int] = []
+            eagle_hidden_seq = target_hidden.to(torch.float32)       # (1, T, H)
+            eagle_tokens_seq = inp                                   # (1, T)
+            prev_trunk_out = None
             for i in range(gamma):
-                # Sequence so far this round: committed + drafts[:i]
-                if i == 0:
-                    full_tokens = committed
-                    full_hidden = target_hidden[0]                  # (T, H)
-                else:
-                    # Re-run target on (committed + drafts[:i]) to get its hidden at the new positions.
-                    extended = torch.tensor([committed + drafts[:i]], device="cuda")
-                    with torch.no_grad():
-                        out_ext = target(input_ids=extended, output_hidden_states=True, use_cache=False, return_dict=True)
-                    full_hidden = out_ext.hidden_states[-1][0]      # (T+i, H)
-                    full_tokens = committed + drafts[:i]
+                if i > 0:
+                    new_h = prev_trunk_out[:, -1:, :]                # (1, 1, H)
+                    new_t = torch.tensor([[drafts[i - 1]]], device="cuda")
+                    eagle_hidden_seq = torch.cat([eagle_hidden_seq, new_h], dim=1)
+                    eagle_tokens_seq = torch.cat([eagle_tokens_seq, new_t], dim=1)
 
-                hp = full_hidden.unsqueeze(0).to(torch.float32)     # (1, T+i, H)
-                tp = torch.tensor([full_tokens], device="cuda")     # (1, T+i)
                 with torch.no_grad(), torch.autocast(device_type="cuda", dtype=torch.bfloat16):
-                    eagle_logits = head(hidden_prev=hp, token_prev=tp)  # (1, T+i, V)
-                drafts.append(eagle_logits[0, -1].argmax().item())
+                    trunk_out = head._trunk(eagle_hidden_seq, eagle_tokens_seq)  # (1, T+i, H)
+                    last_logits = head.lm_head(trunk_out[:, -1, :].float())      # (1, V)
+                drafts.append(last_logits.argmax().item())
+                prev_trunk_out = trunk_out
 
             # Verify: target accepts d[0] if it equals target's argmax-at-position(prefix-1+0)
             #         d[i] accepted if it equals target's argmax after seeing d[0..i-1]
