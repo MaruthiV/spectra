@@ -29,10 +29,9 @@ const EAGLE3_TARGET_ID = "Spectra-Qwen3-1.7B";
 const EAGLE3_HEAD_ID = "Spectra-Eagle3-Qwen3-1.7B";
 const EAGLE3_TARGET_WEIGHTS_URL =
   "https://huggingface.co/mlc-ai/Qwen3-1.7B-q4f16_1-MLC/resolve/main/";
-// Head weights live locally in demo/public/Spectra-Eagle3-Qwen3-1.7B/resolve/main/
-// (mirroring HF's /USER/MODEL/resolve/main/ layout, since web-llm's cleanModelUrl
-// auto-appends "resolve/main/" if the URL doesn't already contain it.)
-const EAGLE3_HEAD_WEIGHTS_URL = "/Spectra-Eagle3-Qwen3-1.7B/resolve/main/";
+// Head weights live on HF — see https://huggingface.co/VemVemRu/Spectra-Eagle3-Qwen3-1.7B
+const EAGLE3_HEAD_WEIGHTS_URL =
+  "https://huggingface.co/VemVemRu/Spectra-Eagle3-Qwen3-1.7B/resolve/main/";
 
 const PROMPTS = [
   "Compose a haiku about WebGPU running an LLM in the browser.",
@@ -524,7 +523,7 @@ async function ensureEagleEngine(): Promise<{
   }
   log("[eagle3-race] loading Qwen3-1.7B + AngelSlim EAGLE-3 head (one-time, ~30s)…");
   log(`[eagle3-race] target weights URL: ${EAGLE3_TARGET_WEIGHTS_URL}`);
-  log(`[eagle3-race] head weights URL:   ${window.location.origin}${EAGLE3_HEAD_WEIGHTS_URL}`);
+  log(`[eagle3-race] head weights URL:   ${EAGLE3_HEAD_WEIGHTS_URL}`);
   log(`[eagle3-race] target wasm:        ${window.location.origin}/spectra-qwen3-1_7b_webgpu.wasm`);
   log(`[eagle3-race] head wasm:          ${window.location.origin}/spectra-eagle3-qwen3-1_7b_webgpu.wasm`);
   const appConfig: webllm.AppConfig = {
@@ -536,7 +535,7 @@ async function ensureEagleEngine(): Promise<{
         overrides: { context_window_size: 4096 },
       },
       {
-        model: `${window.location.origin}${EAGLE3_HEAD_WEIGHTS_URL}`,
+        model: EAGLE3_HEAD_WEIGHTS_URL,
         model_id: EAGLE3_HEAD_ID,
         model_lib: `${window.location.origin}/spectra-eagle3-qwen3-1_7b_webgpu.wasm`,
         overrides: { context_window_size: 4096 },
@@ -564,7 +563,7 @@ async function ensureEagleEngine(): Promise<{
   if (!target || !head) throw new Error("[eagle3-race] failed to retrieve pipelines");
   // Fetch d2t vocab map from the head's static asset.
   log("[eagle3-race] fetching d2t vocab map…");
-  const vocabResp = await fetch(`${window.location.origin}${EAGLE3_HEAD_WEIGHTS_URL}eagle3_vocab_map.json`);
+  const vocabResp = await fetch(`${EAGLE3_HEAD_WEIGHTS_URL}eagle3_vocab_map.json`);
   const vocabJson = await vocabResp.json();
   const d2t = Int32Array.from(vocabJson.d2t as number[]);
   cachedEagleEngine = engine;
