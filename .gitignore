@@ -46,3 +46,6 @@ CLAUDE.md
 # Local planning docs + experiment dumps — never push
 docs/
 experiments/
+
+# Emscripten SDK — clone separately if recompiling models
+build-deps/emsdk/
