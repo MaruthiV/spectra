@@ -4,7 +4,6 @@
 > **First public WebGPU implementation of EAGLE-3.** Qwen3-1.7B target + AngelSlim's pretrained 136M EAGLE-3 head, q4f16_1 quantized, no server round-trips.
 
 🎬 **Live demo:** _[deployment link — TBD]_
-📹 **Video walkthrough:** _[TBD]_
 
 ---
 
@@ -17,9 +16,9 @@
 | Acceptance rate α (γ=2, greedy chain) | **0.39** |
 | Output correctness | **byte-identical to baseline** |
 | Speedup vs baseline | **0.59× (still slower)** |
-| Total Modal cost across all training attempts | **~$25** |
+| Total Modal cost across all training attempts | **~$45** |
 
-I set out to ship a **2× browser LLM speedup** via EAGLE-3. After **two weeks**, **four training runs**, and **$25 in Modal credits**, I have:
+I set out to ship a **2× browser LLM speedup** via EAGLE-3. After **two weeks**, **four training runs**, and **$45 in Modal credits**, I have:
 
 - ✅ The first working WebGPU implementation of EAGLE-3 (model definition + runtime + controller)
 - ✅ Byte-identical output to the greedy baseline (correctness proven)
@@ -31,21 +30,21 @@ This README is the honest postmortem of what I tried, why it didn't hit 2×, and
 
 ## The journey
 
-### Phase C — Training my own EAGLE-1 head (3 attempts, ~$15)
+### Training my own EAGLE-1 head (3 attempts, ~$15)
 
 The goal was a custom draft model trained against Qwen2.5-1.5B (later swapped for Qwen3-1.7B).
 
-| Sub-step | Outcome |
+| Step | Outcome |
 |---|---|
-| C2 — Build 30M-token training corpus from `HuggingFaceH4/ultrachat_200k` | 2 shards, $0.01 |
-| C3 — Dump target hidden states across the corpus | 29.9M positions across 8 shards, ~100 GB, 3h H100, **$0.84** |
-| C4 — Define `EagleHead` architecture (~50M params, 1 layer) | done |
-| C5 — Train 3× (random sampling → sequential → +feature loss) | all converged near loss 1.2 |
-| C6 — Chain-eval each checkpoint vs target on demo prompts | **α ∈ {0.49, 0.44, 0.45}** |
+| Build 30M-token training corpus from `HuggingFaceH4/ultrachat_200k` | 2 shards, $0.01 |
+| Dump target hidden states across the corpus | 29.9M positions across 8 shards, ~100 GB, 3h H100, **$0.84** |
+| Define `EagleHead` architecture (~50M params, 1 layer) | done |
+| Train 3× (random sampling → sequential → +feature loss) | all converged near loss 1.2 |
+| Chain-eval each checkpoint vs target on demo prompts | **α ∈ {0.49, 0.44, 0.45}** |
 
 **The plateau:** all three training attempts ended at α ≈ 0.45 — *below* the off-the-shelf Qwen2.5-0.5B draft (α=0.60). Diagnosis: **exposure bias** from teacher-forced single-step training. At inference, the draft is asked to predict on its own previous predictions, which it never saw during training.
 
-### Phase D — EAGLE-3 TTT (Test-Time Training), $6.36
+### EAGLE-3 TTT (Test-Time Training), $6.36
 
 Researched EAGLE-3 paper + SpecForge code. Three things distinguished EAGLE-3 from my EAGLE-1 attempts:
 
@@ -53,16 +52,16 @@ Researched EAGLE-3 paper + SpecForge code. Three things distinguished EAGLE-3 fr
 2. **Noise injection** on step-0 input to mimic train/inference distribution mismatch
 3. **Multi-layer hidden state fusion** as draft input (not just last layer)
 
-| Sub-step | Outcome |
+| Step | Outcome |
 |---|---|
-| D1 — Implement TTT rollout in `train_eagle.py` | done |
-| D2 — Smoke test (1500 steps, ~30 min) | losses descending healthily, $2 |
-| D3 — Full training: 25K steps × 4 substeps | 1.61h H100, **$6.36** |
+| Implement TTT rollout in `train_eagle.py` | done |
+| Smoke test (1500 steps, ~30 min) | losses descending healthily, $2 |
+| Full training: 25K steps × 4 substeps | 1.61h H100, **$6.36** |
 | | L0=1.32, L1=1.65, L2=1.74, L3=1.81 (descending substeps = good) |
 | | val_top1_match @ 24K = 0.9092 |
-| D4 — Chain-eval on demo prompts | **α=0.585** (haiku 0.45, spec-decoding explainer 0.62, code 0.69) |
+| Chain-eval on demo prompts | **α=0.585** (haiku 0.45, spec-decoding explainer 0.62, code 0.69) |
 
-**Better than Phase C** (+0.14) but still below the **α≥0.7 threshold** needed for 2× speedup at γ=2.
+**Better than the EAGLE-1 attempts** (+0.14) but still below the **α≥0.7 threshold** needed for 2× speedup at γ=2.
 
 ### Why I stopped training
 
@@ -76,9 +75,9 @@ Plus secondary issues: missing loss mask on padding, sub-optimal LR schedule.
 
 **Decision:** Fix all 3 + retrain = ~2-3 more training rounds (~$20-40 + days). **AngelSlim** already shipped pretrained Qwen3-1.7B EAGLE-3 heads with the correct architecture and recipe. The right call was to use theirs and reserve the training budget for if AngelSlim's didn't work.
 
-### Phase E — AngelSlim head + first WebGPU EAGLE-3 runtime
+### AngelSlim head + first WebGPU EAGLE-3 runtime
 
-**Total Phase E cost: ~$2** (just target wasm compile time on Modal).
+**Total integration cost: ~$2** (just target wasm compile time on Modal).
 
 #### Architecture
 
@@ -106,13 +105,13 @@ prompt ──► tokenizer ──► PROMPT     │   web-llm fork (TypeScript) 
                                                   └──────────────────┘
 ```
 
-| Sub-step | Outcome |
+| Step | Outcome |
 |---|---|
-| E1 — Compile Qwen3-1.7B target to WebGPU wasm | 5.9 MB wasm with `spectra_aux_layer_ids=[1,13,24]` |
-| E2 — AngelSlim head → WebGPU artifact | Wrote `eagle3` model type in `mlc-llm/python/mlc_llm/model/eagle3/` (~350 LoC), registered in MODELS dict, weight loader for AngelSlim → MLC param mapping. Compiled 4.7 MB head wasm, 72 MB q4f16_1 weight shards. |
-| E3 — Multi-layer hidden state exposure | Added `forward_with_aux` to `Qwen3Model`, `batch_prefill_with_aux` to LM-head model. Exposed via `spectraBatchPrefillWithAux` in web-llm fork. |
-| E4 — EagleSpecController V1 (re-prefill per draft) | Works end-to-end at **17 tok/s** |
-| E4 → V2 — Head decode + KV reuse + carry-over verify | **40 tok/s (2.3× over V1)** |
+| Compile Qwen3-1.7B target to WebGPU wasm | 5.9 MB wasm with `spectra_aux_layer_ids=[1,13,24]` |
+| AngelSlim head → WebGPU artifact | Wrote `eagle3` model type in `mlc-llm/python/mlc_llm/model/eagle3/` (~350 LoC), registered in MODELS dict, weight loader for AngelSlim → MLC param mapping. Compiled 4.7 MB head wasm, 72 MB q4f16_1 weight shards. |
+| Multi-layer hidden state exposure | Added `forward_with_aux` to `Qwen3Model`, `batch_prefill_with_aux` to LM-head model. Exposed via `spectraBatchPrefillWithAux` in web-llm fork. |
+| EagleSpecController V1 (re-prefill per draft) | Works end-to-end at **17 tok/s** |
+| V2 — Head decode + KV reuse + carry-over verify | **40 tok/s (2.3× over V1)** |
 
 ---
 
@@ -140,14 +139,14 @@ For 2× speedup we need ~4.4 commits per round. With α=0.39 this is unreachable
 1. **Pretrained EAGLE-3 heads don't generalize across precision regimes.** AngelSlim trained against fp16 target activations. Switching the browser target to q4f32_1 (fp32 activations) made acceptance WORSE, not better. The head is tuned to specific numerical noise.
 2. **Browser inference has a verify floor.** Even with a perfect zero-cost draft model, target verify (~25 ms for 3 tokens through 28 layers) sets the round time. To hit 2× under that floor needs >4 commits per round on average.
 3. **Chain decoding is fundamentally weaker than tree decoding.** EAGLE-3's published results (α≈0.7) come from tree decoding with K=4 candidates per step + tree-mask attention. mlc-llm's `PagedKVCache` doesn't support tree-mask. Adding it is a days-long fork.
-4. **The cost of "let me train my own" should be measured before committing.** I spent $22 + ~2 weeks on Phase C/D before pivoting. Reading SpecForge first would have flagged the recipe bugs, and a single $0 search for "pretrained EAGLE-3" would have found AngelSlim's release the same day they posted it.
+4. **The cost of "let me train my own" should be measured before committing.** I spent ~$45 + ~2 weeks on the training attempts before pivoting. Reading SpecForge first would have flagged the recipe bugs, and a single $0 search for "pretrained EAGLE-3" would have found AngelSlim's release the same day they posted it.
 5. **Forking quickly beats waiting for upstream.** mlc-llm has no `eagle3` model type. Took ~350 LoC to add. Same for multi-layer hidden state exposure in web-llm.
 
 ## What I wish I'd find / what's next
 
 - **A pretrained EAGLE-3 head against an int4-quantized target.** Most pretrained heads ship against fp16/bf16 — but production inference is quantized. There's a real research gap here.
 - **Tree-mask attention in mlc-llm `PagedKVCache`.** If this lands, my V2 controller can switch to tree decoding overnight and likely hit 1.4–1.8× even at α=0.39.
-- **Custom training run with the corrected recipe** (Phase F-lite, ~$10) — sanity-check that my pipeline now produces a reasonable head, even if not headline-grade. Mostly a reproducibility credibility move.
+- **Custom training run with the corrected recipe** (~$10) — sanity-check that my pipeline now produces a reasonable head, even if not headline-grade. Mostly a reproducibility credibility move.
 
 ## Open questions for the community
 
@@ -175,13 +174,12 @@ spectra/
 │   │   └── python/mlc_llm/model/eagle3/   # eagle3_model.py, eagle3_loader.py, ~350 LoC
 │   └── models/             # compiled wasm + weights (gitignored)
 ├── scripts/
-│   ├── remote/             # Modal training scripts (Phase C+D)
+│   ├── remote/             # Modal training scripts (EAGLE-1 + EAGLE-3 TTT)
 │   │   ├── train_eagle.py  # EAGLE-3 TTT trainer
 │   │   ├── dump_hidden.py  # Target hidden state dump
 │   │   └── eval_eagle.py   # Chain α evaluation
 │   └── sim/                # Python CPU correctness simulator
-├── bench/                  # Playwright γ sweep harness
-└── docs/                   # Detailed phase plans + findings
+└── bench/                  # Playwright γ sweep harness
 ```
 
 ## Build & run locally
@@ -197,7 +195,8 @@ cd ../../demo && rm -rf node_modules pnpm-lock.yaml && pnpm install && pnpm dev
 # (pnpm caches file: deps — required to pick up rebuilt fork)
 
 # 3. Recompile target / head wasm (rare — only for compile-flag changes)
-# Requires the `spectra` conda env. See docs/phase0_findings.md § "Phase 0b B6".
+# Requires the `spectra` conda env, MLC_LLM_SOURCE_DIR, emcc on PATH, and tvm/lib
+# symlinks for mlc_wasm_runtime.bc + wasm_runtime.bc + tvmjs_support.bc + webgpu_runtime.bc.
 ```
 
 ## Credits
