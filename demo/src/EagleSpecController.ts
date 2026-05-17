@@ -85,8 +85,15 @@ export class EagleSpecController {
   private auxRowDim: number = 0;       // 3 * hiddenSize
   private hiddenSize: number = 0;      // H, derived from auxRowDim/3
   private committed: number[] = [];
-  /** Total tokens currently in target's KV cache. */
+  /** Total tokens currently in target's KV cache (= committed.length, invariant). */
   private targetKVLen: number = 0;
+  /** Bonus token from prior round whose aux/KV is NOT yet materialized.
+   *  Materialized at the start of next step via a 1-token target prefill. */
+  private pendingBonus: number | null = null;
+  /** V2: how many positions are currently filled in the HEAD's KV cache.
+   *  At round R start: should equal `committed.length` for round R-1
+   *  (i.e. head saw inputs for the first C_{R-1} positions). */
+  private headKVLen: number = 0;
 
   constructor(
     private target: webllm.LLMChatPipeline,
@@ -107,109 +114,152 @@ export class EagleSpecController {
 
   /** Initial prefill: feed prompt to target, cache aux + logits at last position. */
   async prefill(promptTokens: number[]): Promise<void> {
-    // Get target logits + aux at all positions. logit_positions=[last] for the
-    // initial-token prediction we don't actually use (we'll use the head instead).
-    const { auxHidden, auxHiddenDim } = await this.target.spectraBatchPrefillWithAux(
+    const ret = await this.target.spectraBatchPrefillWithAux(
       promptTokens,
       [promptTokens.length - 1],
     );
+    console.log("[EagleSpec] prefill ret:", {
+      hasLogits: !!ret?.logits,
+      logitsLen: ret?.logits?.length,
+      hasAux: !!ret?.auxHidden,
+      auxLen: ret?.auxHidden?.length,
+      auxDim: ret?.auxHiddenDim,
+      promptLen: promptTokens.length,
+    });
+    if (!ret || !ret.auxHidden || !ret.auxHiddenDim) {
+      throw new Error("[EagleSpec] spectraBatchPrefillWithAux returned bad shape: " + JSON.stringify(ret));
+    }
     this.committed = [...promptTokens];
-    this.auxCache = auxHidden;          // length = promptTokens.length * 3H
-    this.auxRowDim = auxHiddenDim;      // 3H
-    this.hiddenSize = Math.floor(auxHiddenDim / 3);
+    this.auxCache = ret.auxHidden;
+    this.auxRowDim = ret.auxHiddenDim;
+    this.hiddenSize = Math.floor(ret.auxHiddenDim / 3);
     this.targetKVLen = promptTokens.length;
+    // The prefill's last logit row is the target's next-token prediction.
+    // That's our first pendingBonus; it'll be materialized in step 0.
+    this.pendingBonus = argmaxF32(ret.logits, 0, this.targetVocabSize);
+    console.log("[EagleSpec] cached: committed.len=", this.committed.length,
+      "auxCache.len=", this.auxCache.length, "auxRowDim=", this.auxRowDim,
+      "hiddenSize=", this.hiddenSize, "pendingBonus=", this.pendingBonus);
   }
 
-  /** One spec round: γ head drafts, 1 target verify, commit. */
+  /** Get embed for ONE token as Float32Array of length hiddenSize. */
+  private async embedOne(token: number): Promise<Float32Array> {
+    return await this.target.spectraEmbedTokens([token]);
+  }
+
+  /** One spec round V2 (carry-over verify + head KV reuse).
+   *  - At round R≥1 start: head_kv has C_{R-1} positions. Extend by (1+accepted_prev)
+   *    via decode with TRUE aux (from prior verify) to reach C_R positions. Last
+   *    extension's logit = draft[0].
+   *  - At round 0 (head_kv == 0): full prefill of length C_0 → head_kv = C_0;
+   *    prefill's last logit = draft[0].
+   *  - Steps 1..γ-1: decode 1 token each with PLACEHOLDER aux.
+   *  - End of round: truncate head_kv by (γ-1) to drop placeholder positions. */
   async step(roundIdx: number): Promise<EagleStepEvent & { eos: boolean }> {
     if (!this.auxCache) throw new Error("EagleSpecController.step before prefill");
+    if (this.pendingBonus === null) throw new Error("step: pendingBonus null (prefill not run?)");
     const γ = this.cfg.draftLength;
     const tStart = performance.now();
     const timing: EagleTiming = {
       headDraftMs: 0, targetVerifyMs: 0, kvOpsMs: 0, totalMs: 0,
     };
+    const draftVocabSize = this.d2t.length;
+    const C = this.committed.length;
 
-    // ---- 1. γ head prefills to predict drafts -----
+    // ---- 1. Head drafts (V2: persistent KV) ----
+    // Head input alignment (AngelSlim): at head position i, see
+    //   embed(token_{i+1}) + aux(token_i)
+    // For round 0 (head_kv empty): full prefill of length C, last logit = draft[0].
+    // For round R≥1 (head_kv = C_prev): extend by 1+accepted_prev decodes with TRUE
+    //   aux from prior verify; final decode's logit = draft[0]. Then decodes for [1..γ-1].
     const tDraft0 = performance.now();
     const drafts: number[] = [];
-    let curSeqTokens = [...this.committed];
-    // Aux row to use for newly drafted positions. EAGLE-3 inference reuses
-    // the LAST target-known aux as the "carrier" when the head sees a new
-    // position whose true target_hidden is unknown.
-    const lastAuxRow = this.auxCache.slice(
+    let lastLogits: Float32Array;
+
+    if (this.headKVLen === 0) {
+      // Round 0: full prefill. embedTokens = committed[1:] + pendingBonus, aux = auxCache.
+      const embedTokens = [...this.committed.slice(1), this.pendingBonus];
+      const headLen = embedTokens.length;  // = C
+      const inputEmb = await this.target.spectraEmbedTokens(embedTokens);
+      lastLogits = await this.eagleHead.spectraEagle3Prefill(
+        inputEmb, this.auxCache, headLen, this.hiddenSize,
+      );
+      this.headKVLen = headLen;
+      // Extract LAST position's logits row.
+      const lastOff = (headLen - 1) * draftVocabSize;
+      const firstDraftIdx = argmaxF32(lastLogits, lastOff, draftVocabSize);
+      drafts.push(this.draftToTarget(firstDraftIdx));
+    } else {
+      // Round R≥1: extend head_kv by (C - this.headKVLen) decodes with TRUE aux.
+      const needed = C - this.headKVLen;  // = 1 + accepted_prev
+      if (needed <= 0) throw new Error(`V2 head extension impossible: C=${C} headKVLen=${this.headKVLen}`);
+      // For each new head position k in [headKVLen, C-1]:
+      //   embed = committed[k+1] if k < C-1 else pendingBonus
+      //   aux   = committed[k] (TRUE, from auxCache)
+      let logitsBuf: Float32Array | null = null;
+      for (let k = this.headKVLen; k < C; k++) {
+        const embedTok = (k < C - 1) ? this.committed[k + 1] : this.pendingBonus!;
+        const embed = await this.target.spectraEmbedTokens([embedTok]);
+        const auxRow = this.auxCache.slice(k * this.auxRowDim, (k + 1) * this.auxRowDim);
+        logitsBuf = await this.eagleHead.spectraEagle3Decode(embed, auxRow, this.hiddenSize);
+      }
+      this.headKVLen = C;
+      lastLogits = logitsBuf!;  // last decode's logits (= step 0's draft prediction)
+      const firstDraftIdx = argmaxF32(lastLogits, 0, draftVocabSize);
+      drafts.push(this.draftToTarget(firstDraftIdx));
+    }
+
+    // Steps 1..γ-1: decode each with PLACEHOLDER aux.
+    // At step i (i≥1), the new head position k has embed=drafts[i-1], aux=placeholder for
+    // position k (would be aux of pendingBonus for step 1, or prior draft for step ≥2).
+    // We use lastAuxRow (last TRUE row in auxCache) as the carrier placeholder.
+    const lastTrueAuxRow = this.auxCache.slice(
       (this.committed.length - 1) * this.auxRowDim,
       this.committed.length * this.auxRowDim,
     );
-    let curAux = new Float32Array(this.auxCache);  // copy of committed aux
-    for (let i = 0; i < γ; i++) {
-      // Build inputs for head prefill on curSeqTokens.
-      const inputEmb = await this.target.spectraEmbedTokens(curSeqTokens);
-      const headLogits = await this.eagleHead.spectraEagle3Prefill(
-        inputEmb,
-        curAux,
-        curSeqTokens.length,
-        this.hiddenSize,
+    for (let i = 1; i < γ; i++) {
+      const prevDraft = drafts[i - 1];
+      const embed = await this.target.spectraEmbedTokens([prevDraft]);
+      const stepLogits = await this.eagleHead.spectraEagle3Decode(
+        embed, lastTrueAuxRow, this.hiddenSize,
       );
-      // Head logits: Float32Array of length draft_vocab_size (=32000).
-      const draftIdx = argmaxF32(headLogits);
-      const targetIdx = this.draftToTarget(draftIdx);
-      drafts.push(targetIdx);
-
-      // Prepare inputs for the NEXT draft step (only if i < γ-1).
-      if (i < γ - 1) {
-        curSeqTokens = [...curSeqTokens, targetIdx];
-        // Append a copy of lastAuxRow as the aux for the new (drafted) position.
-        const newAux = new Float32Array(curAux.length + this.auxRowDim);
-        newAux.set(curAux);
-        newAux.set(lastAuxRow, curAux.length);
-        curAux = newAux;
-      }
+      this.headKVLen += 1;
+      const draftIdx = argmaxF32(stepLogits, 0, draftVocabSize);
+      drafts.push(this.draftToTarget(draftIdx));
     }
     timing.headDraftMs = performance.now() - tDraft0;
 
-    // ---- 2. Target verify ----
+    // ---- 2. Target verify with carry-over: [pendingBonus, ...drafts] = γ+1 tokens ----
+    // - LOCAL position 0 in verify = pendingBonus → logit predicts next-after-pendingBonus = compare to draft[0]
+    // - LOCAL position i = draft[i-1]              → logit predicts next-after-draft[i-1] = compare to draft[i]
+    // - LOCAL position γ = draft[γ-1]              → logit predicts after-all-drafts = NEW pendingBonus
     const tVerify0 = performance.now();
-    const positions = drafts.map((_, i) => i);  // 0..γ-1
+    const priorBonus = this.pendingBonus;
+    const verifyInput = [priorBonus, ...drafts];                  // length γ+1
+    const verifyPositions = verifyInput.map((_, i) => i);         // [0..γ]
     const { logits: targetLogitsFlat, auxHidden: newAuxFlat } =
-      await this.target.spectraBatchPrefillWithAux(drafts, positions);
-    this.targetKVLen += γ;
+      await this.target.spectraBatchPrefillWithAux(verifyInput, verifyPositions);
+    this.targetKVLen += verifyInput.length;                       // +γ+1
     timing.targetVerifyMs = performance.now() - tVerify0;
 
     // ---- 3. Greedy verify ----
     let accepted = 0;
     for (let i = 0; i < γ; i++) {
       const targetPick = argmaxF32(
-        targetLogitsFlat,
-        i * this.targetVocabSize,
-        this.targetVocabSize,
+        targetLogitsFlat, i * this.targetVocabSize, this.targetVocabSize,
       );
-      if (targetPick === drafts[i]) {
-        accepted += 1;
-      } else {
-        break;
-      }
+      if (targetPick === drafts[i]) accepted += 1;
+      else break;
     }
-    // Determine the +1 "bonus" token: target's pick at position `accepted`
-    // (which is either the first mismatch or, if all accepted, the very next).
-    const bonusPos = accepted;  // 0..γ
-    const bonusToken = argmaxF32(
-      targetLogitsFlat,
-      bonusPos * this.targetVocabSize,
-      this.targetVocabSize,
+    // New bonus = target.argmax at the (accepted)-th logit if rejected mid-way,
+    // OR the γ-th logit if all accepted (= prediction after the last draft).
+    const newBonusRowIdx = accepted < γ ? accepted : γ;
+    const newBonus = argmaxF32(
+      targetLogitsFlat, newBonusRowIdx * this.targetVocabSize, this.targetVocabSize,
     );
-    // If accepted === γ, bonusPos === γ would be out of our verified range
-    // (we only fed γ tokens). In that case we just take target's pick at γ-1's
-    // logits (which already predicts γ-th position).
-    // For simplicity at V1, when accepted=γ: bonusToken comes from the last
-    // verify logit row, which IS the target's prediction for position γ.
-    const finalBonus = accepted === γ
-      ? argmaxF32(targetLogitsFlat, (γ - 1) * this.targetVocabSize, this.targetVocabSize)
-      : bonusToken;
-
-    const newCommits: number[] = drafts.slice(0, accepted);
-    newCommits.push(finalBonus);
 
     // ---- 4. Rollback target KV by (γ - accepted) ----
+    // Keep [priorBonus, drafts[0..accepted-1]] in KV (1 + accepted tokens).
     const tKV0 = performance.now();
     const rollback = γ - accepted;
     if (rollback > 0) {
@@ -218,28 +268,33 @@ export class EagleSpecController {
     }
     timing.kvOpsMs = performance.now() - tKV0;
 
-    // ---- 5. Update committed + aux cache ----
-    // Append accepted drafts' aux from the verify step.
+    // ---- 5. Commit priorBonus + accepted drafts (aux from verify rows 0..accepted) ----
+    this.committed.push(priorBonus);
     this.committed.push(...drafts.slice(0, accepted));
-    const newAuxAppend = newAuxFlat.subarray(0, accepted * this.auxRowDim);
-    const updatedAux = new Float32Array(this.auxCache.length + newAuxAppend.length);
+    const commitRows = 1 + accepted;
+    const commitAux = newAuxFlat.subarray(0, commitRows * this.auxRowDim);
+    const updatedAux = new Float32Array(this.auxCache.length + commitAux.length);
     updatedAux.set(this.auxCache);
-    updatedAux.set(newAuxAppend, this.auxCache.length);
+    updatedAux.set(commitAux, this.auxCache.length);
     this.auxCache = updatedAux;
-    // We do NOT include bonus token's aux because target didn't see it (we'd
-    // need another forward pass). Reuse the last available aux next round.
-    this.committed.push(finalBonus);
+    this.pendingBonus = newBonus;
+
+    // ---- 6. V2: truncate head KV by (γ-1) to drop placeholder draft positions ----
+    // The first head op of round R extended by (1 + accepted_prev) with TRUE aux.
+    // The subsequent (γ-1) decodes used placeholder aux. Drop them so the next
+    // round starts from a head_kv that exactly mirrors committed.length.
+    const headTrunc = γ - 1;
+    if (headTrunc > 0) {
+      this.eagleHead.spectraTruncateKVCache(headTrunc);
+      this.headKVLen -= headTrunc;
+    }
 
     timing.totalMs = performance.now() - tStart;
-
-    const eos = newCommits.includes(this.cfg.eosTokenId);
+    const committedThisRound = [priorBonus, ...drafts.slice(0, accepted)];
+    const eos = committedThisRound.includes(this.cfg.eosTokenId);
     return {
-      round: roundIdx,
-      drafts,
-      accepted,
-      committed: newCommits,
-      timing,
-      eos,
+      round: roundIdx, drafts, accepted,
+      committed: committedThisRound, timing, eos,
     };
   }
 
@@ -250,6 +305,8 @@ export class EagleSpecController {
     this.committed = [];
     this.auxCache = null;
     this.targetKVLen = 0;
+    this.pendingBonus = null;
+    this.headKVLen = 0;
 
     const t0 = performance.now();
     await this.prefill(promptTokens);

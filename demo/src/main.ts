@@ -11,6 +11,7 @@
 
 import * as webllm from "@mlc-ai/web-llm";
 import { SpecController, type SpecConfig } from "./SpecController.js";
+import { EagleSpecController, type EagleSpecConfig } from "./EagleSpecController.js";
 
 const STOCK_MODEL_ID = "Qwen2.5-0.5B-Instruct-q4f16_1-MLC";
 const SPECTRA_MODEL_ID = "Spectra-Qwen2.5-0.5B-Instruct-q4f16_1";
@@ -22,6 +23,16 @@ const HF_WEIGHTS_BASE_URL =
   "https://huggingface.co/mlc-ai/Qwen2.5-0.5B-Instruct-q4f16_1-MLC/resolve/main/";
 const HF_TARGET_WEIGHTS_URL =
   "https://huggingface.co/mlc-ai/Qwen2.5-1.5B-Instruct-q4f16_1-MLC/resolve/main/";
+
+// EAGLE-3 path: Qwen3-1.7B target + AngelSlim pre-trained head.
+const EAGLE3_TARGET_ID = "Spectra-Qwen3-1.7B";
+const EAGLE3_HEAD_ID = "Spectra-Eagle3-Qwen3-1.7B";
+const EAGLE3_TARGET_WEIGHTS_URL =
+  "https://huggingface.co/mlc-ai/Qwen3-1.7B-q4f16_1-MLC/resolve/main/";
+// Head weights live locally in demo/public/Spectra-Eagle3-Qwen3-1.7B/resolve/main/
+// (mirroring HF's /USER/MODEL/resolve/main/ layout, since web-llm's cleanModelUrl
+// auto-appends "resolve/main/" if the URL doesn't already contain it.)
+const EAGLE3_HEAD_WEIGHTS_URL = "/Spectra-Eagle3-Qwen3-1.7B/resolve/main/";
 
 const PROMPTS = [
   "Compose a haiku about WebGPU running an LLM in the browser.",
@@ -293,7 +304,7 @@ async function runSpec(): Promise<void> {
 }
 
 function setBusy(busy: boolean): void {
-  for (const id of ["run-stock", "run-spectra", "run-spec", "run-race"] as const) {
+  for (const id of ["run-stock", "run-spectra", "run-spec", "run-race", "run-eagle3"] as const) {
     const el = document.getElementById(id) as HTMLButtonElement | null;
     if (el) el.disabled = busy;
   }
@@ -491,6 +502,165 @@ async function runRace(): Promise<void> {
   }
 }
 
+// ---- EAGLE-3 race (Qwen3-1.7B target + AngelSlim pre-trained head) ---------
+let cachedEagleEngine: webllm.MLCEngine | null = null;
+let cachedEagleTarget: webllm.LLMChatPipeline | null = null;
+let cachedEagleHead: webllm.LLMChatPipeline | null = null;
+let cachedD2T: Int32Array | null = null;
+
+async function ensureEagleEngine(): Promise<{
+  target: webllm.LLMChatPipeline;
+  head: webllm.LLMChatPipeline;
+  d2t: Int32Array;
+  targetVocabSize: number;
+}> {
+  if (cachedEagleEngine && cachedEagleTarget && cachedEagleHead && cachedD2T) {
+    return {
+      target: cachedEagleTarget,
+      head: cachedEagleHead,
+      d2t: cachedD2T,
+      targetVocabSize: 151936,
+    };
+  }
+  log("[eagle3-race] loading Qwen3-1.7B + AngelSlim EAGLE-3 head (one-time, ~30s)…");
+  log(`[eagle3-race] target weights URL: ${EAGLE3_TARGET_WEIGHTS_URL}`);
+  log(`[eagle3-race] head weights URL:   ${window.location.origin}${EAGLE3_HEAD_WEIGHTS_URL}`);
+  log(`[eagle3-race] target wasm:        ${window.location.origin}/spectra-qwen3-1_7b_webgpu.wasm`);
+  log(`[eagle3-race] head wasm:          ${window.location.origin}/spectra-eagle3-qwen3-1_7b_webgpu.wasm`);
+  const appConfig: webllm.AppConfig = {
+    model_list: [
+      {
+        model: EAGLE3_TARGET_WEIGHTS_URL,
+        model_id: EAGLE3_TARGET_ID,
+        model_lib: `${window.location.origin}/spectra-qwen3-1_7b_webgpu.wasm`,
+        overrides: { context_window_size: 4096 },
+      },
+      {
+        model: `${window.location.origin}${EAGLE3_HEAD_WEIGHTS_URL}`,
+        model_id: EAGLE3_HEAD_ID,
+        model_lib: `${window.location.origin}/spectra-eagle3-qwen3-1_7b_webgpu.wasm`,
+        overrides: { context_window_size: 4096 },
+      },
+    ],
+  };
+  const engine = new webllm.MLCEngine({ appConfig, initProgressCallback });
+  log("[eagle3-race] engine constructed, calling reload([target, head])…");
+  try {
+    await engine.reload([EAGLE3_TARGET_ID, EAGLE3_HEAD_ID]);
+  } catch (e) {
+    log(`[eagle3-race] engine.reload FAILED with both models: ${e}`);
+    log("[eagle3-race] trying TARGET only to isolate which fails…");
+    try {
+      await engine.reload([EAGLE3_TARGET_ID]);
+      log("[eagle3-race] target alone loaded OK — head is the problem");
+    } catch (e2) {
+      log(`[eagle3-race] target alone ALSO failed: ${e2}`);
+    }
+    throw e;
+  }
+  log("[eagle3-race] reload OK; getting pipelines…");
+  const target = engine.spectraGetChatPipeline(EAGLE3_TARGET_ID);
+  const head = engine.spectraGetChatPipeline(EAGLE3_HEAD_ID);
+  if (!target || !head) throw new Error("[eagle3-race] failed to retrieve pipelines");
+  // Fetch d2t vocab map from the head's static asset.
+  log("[eagle3-race] fetching d2t vocab map…");
+  const vocabResp = await fetch(`${window.location.origin}${EAGLE3_HEAD_WEIGHTS_URL}eagle3_vocab_map.json`);
+  const vocabJson = await vocabResp.json();
+  const d2t = Int32Array.from(vocabJson.d2t as number[]);
+  cachedEagleEngine = engine;
+  cachedEagleTarget = target;
+  cachedEagleHead = head;
+  cachedD2T = d2t;
+  log(`[eagle3-race] engine ready. d2t length=${d2t.length}, target_vocab=${vocabJson.target_vocab_size}`);
+  return { target, head, d2t, targetVocabSize: vocabJson.target_vocab_size };
+}
+
+async function runEagle3Race(): Promise<void> {
+  setBusy(true);
+  const promptInput = $("eagle3-prompt") as HTMLInputElement;
+  const maxTokInput = $("eagle3-max-tokens") as HTMLInputElement;
+  const gammaInput = $("eagle3-gamma") as HTMLInputElement;
+  const prompt = promptInput.value.trim();
+  if (!prompt) { setBusy(false); return; }
+  const maxTokens = Math.max(16, Math.min(256, parseInt(maxTokInput.value, 10) || 80));
+  const gamma = Math.max(1, Math.min(4, parseInt(gammaInput.value, 10) || 2));
+
+  const baselinePane = $("eagle3-pane-baseline");
+  const spectraPane = $("eagle3-pane-spectra");
+  const baselineText = $("eagle3-text-baseline");
+  const spectraText = $("eagle3-text-spectra");
+  const baselineStats = $("eagle3-stats-baseline");
+  const spectraStats = $("eagle3-stats-spectra");
+  const winnerBanner = $("eagle3-winner-banner");
+
+  baselinePane.classList.remove("winner");
+  spectraPane.classList.remove("winner");
+  baselineText.innerText = "";
+  spectraText.innerText = "";
+  baselineStats.innerText = "running…";
+  spectraStats.innerText = "queued";
+  winnerBanner.innerText = "";
+  winnerBanner.className = "";
+
+  try {
+    const { target, head, d2t, targetVocabSize } = await ensureEagleEngine();
+    const tokenizer = target.spectraGetTokenizer();
+    const eosId = 151645;  // Qwen3 <|im_end|>
+    const promptTokens = Array.from(tokenizer.encode(prompt));
+
+    // Baseline: Qwen3-1.7B greedy decode (one target forward per token).
+    log(`[eagle3-race] baseline starting (Qwen3-1.7B greedy, max=${maxTokens})…`);
+    const baselineResult = await runTargetGreedy(target, promptTokens, maxTokens, (text) => {
+      baselineText.innerText += text;
+      baselineText.scrollTop = baselineText.scrollHeight;
+    }, eosId);
+    baselineStats.innerText = `${baselineResult.tokPerSec.toFixed(1)} tok/s · ${(baselineResult.decodeMs / 1000).toFixed(2)}s · ${baselineResult.tokens.length} tok`;
+    log(`[eagle3-race] baseline done: ${baselineResult.tokPerSec.toFixed(1)} tok/s`);
+
+    // Spectra-EAGLE3: target + AngelSlim head.
+    spectraStats.innerText = "running…";
+    log(`[eagle3-race] EAGLE-3 spec starting (γ=${gamma}, max=${maxTokens})…`);
+    const cfg: EagleSpecConfig = {
+      draftLength: gamma,
+      maxTokens,
+      eosTokenId: eosId,
+      onStep: (e) => {
+        for (const tid of e.committed) {
+          const decoded = tokenizer.decode(Int32Array.from([tid])) as unknown;
+          const text = typeof decoded === "string" ? decoded : new TextDecoder().decode(decoded as BufferSource);
+          spectraText.innerText += text;
+        }
+        spectraText.scrollTop = spectraText.scrollHeight;
+        log(
+          `  r${e.round} d=[${e.drafts.join(",")}] a=${e.accepted}/${e.drafts.length} c=${e.committed.length} ` +
+          `head=${e.timing.headDraftMs.toFixed(0)} verify=${e.timing.targetVerifyMs.toFixed(0)} kv=${e.timing.kvOpsMs.toFixed(0)} tot=${e.timing.totalMs.toFixed(0)}ms`,
+        );
+      },
+    };
+    const ctl = new EagleSpecController(target, head, d2t, targetVocabSize, cfg);
+    const specResult = await ctl.generate(promptTokens);
+    spectraStats.innerText = `${specResult.tokensPerSecond.toFixed(1)} tok/s · ${(specResult.decodeMs / 1000).toFixed(2)}s · ${specResult.tokens.length} tok · α=${specResult.cumulativeAcceptance.toFixed(2)}`;
+    log(`[eagle3-race] EAGLE-3 done: ${specResult.tokensPerSecond.toFixed(1)} tok/s, α=${specResult.cumulativeAcceptance.toFixed(2)}`);
+
+    const speedup = specResult.tokensPerSecond / Math.max(baselineResult.tokPerSec, 1e-3);
+    if (specResult.tokensPerSecond > baselineResult.tokPerSec) {
+      spectraPane.classList.add("winner");
+      winnerBanner.innerText = `⚡ EAGLE-3 wins: ${speedup.toFixed(2)}× faster than baseline (α=${specResult.cumulativeAcceptance.toFixed(2)})`;
+      winnerBanner.className = "race-winner-banner";
+    } else {
+      baselinePane.classList.add("winner");
+      winnerBanner.innerText = `Baseline wins (${(1 / speedup).toFixed(2)}× faster) — α=${specResult.cumulativeAcceptance.toFixed(2)} too low`;
+      winnerBanner.className = "race-winner-banner";
+    }
+  } catch (e) {
+    log(`[eagle3-race] ERROR: ${e}`);
+    winnerBanner.innerText = `Error: ${e}`;
+    console.error(e);
+  } finally {
+    setBusy(false);
+  }
+}
+
 window.addEventListener("DOMContentLoaded", async () => {
   log("Initializing Spectra demo…");
   if (!("gpu" in navigator)) {
@@ -513,6 +683,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   $("run-spectra").addEventListener("click", () => runSpectra().catch((e) => log(`ERROR: ${e}`)));
   $("run-spec").addEventListener("click", () => runSpec().catch((e) => log(`ERROR: ${e}`)));
   $("run-race").addEventListener("click", () => runRace().catch((e) => log(`ERROR: ${e}`)));
+  $("run-eagle3").addEventListener("click", () => runEagle3Race().catch((e) => log(`ERROR: ${e}`)));
 
   const gammaInput = $("gamma") as HTMLInputElement;
   const gammaVal = $("gamma-val");

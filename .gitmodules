@@ -1,0 +1,8 @@
+[submodule "build-deps/mlc-llm"]
+	path = build-deps/mlc-llm
+	url = https://github.com/MaruthiV/mlc-llm.git
+	branch = spectra-eagle3
+[submodule "build-deps/web-llm"]
+	path = build-deps/web-llm
+	url = https://github.com/MaruthiV/web-llm.git
+	branch = spectra-eagle3

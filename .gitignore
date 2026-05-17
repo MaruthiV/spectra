@@ -42,3 +42,7 @@ experiments/**/raw/
 
 # Project-internal onboarding notes (kept local, never committed/pushed).
 CLAUDE.md
+
+# Local planning docs + experiment dumps — never push
+docs/
+experiments/
