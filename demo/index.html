@@ -472,9 +472,13 @@
       <p class="section-sub">
         Pre-EAGLE-3 SpecController against a 0.5B draft of the same family. Qwen2.5-1.5B + Qwen2.5-0.5B-Instruct, hits a real 1.45× mean speedup. Kept as a working comparison and proof the spec-decoding plumbing works end-to-end.
       </p>
+      <p class="section-sub" style="font-size: 0.82rem; padding: 10px 12px; background: var(--bg-soft); border: 1px solid var(--border); border-radius: 6px; margin-bottom: 14px;">
+        Ran the EAGLE-3 race above first? The browser may hit its storage quota loading these models. Click <strong>Clear browser cache</strong> below first (page will reload).
+      </p>
       <div class="input-row" style="margin-bottom: 12px;">
         <input type="text" id="race-prompt" value="Write a Python function that returns the first n Fibonacci numbers as a list." />
         <button id="run-race" class="secondary">Race</button>
+        <button id="clear-cache" class="secondary">Clear browser cache</button>
       </div>
       <div class="options-row" style="margin-bottom: 16px;">
         <label>max tokens <input type="number" id="race-max-tokens" value="80" min="16" max="256" /></label>

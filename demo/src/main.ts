@@ -664,6 +664,60 @@ async function runEagle3Race(): Promise<void> {
   }
 }
 
+/**
+ * Clear all model cache (Cache API + IndexedDB). Used by the manual
+ * "Clear browser cache" button and by the quota-error auto-retry.
+ */
+async function clearAllModelCache(): Promise<void> {
+  try {
+    if (typeof caches !== "undefined") {
+      const keys = await caches.keys();
+      await Promise.all(keys.map((k) => caches.delete(k)));
+    }
+  } catch (e) {
+    console.warn("[cache] Cache API clear failed:", e);
+  }
+  try {
+    if ("databases" in indexedDB) {
+      // @ts-expect-error: indexedDB.databases() is widely shipped but TS lib lags
+      const dbs: { name?: string }[] = await indexedDB.databases();
+      await Promise.all(
+        dbs.map(
+          (d) =>
+            new Promise<void>((resolve) => {
+              if (!d.name) return resolve();
+              const req = indexedDB.deleteDatabase(d.name);
+              req.onsuccess = req.onerror = req.onblocked = () => resolve();
+            }),
+        ),
+      );
+    }
+  } catch (e) {
+    console.warn("[cache] IndexedDB clear failed:", e);
+  }
+}
+
+/**
+ * Wrap runRace with a quota-error auto-retry. On QuotaExceededError, clear
+ * cache + reload page (the Qwen2.5 race needs a fresh engine instance anyway
+ * once cache is gone — the in-memory engine state from the failed load is
+ * unreliable). Most users will only hit this once.
+ */
+async function runRaceWithQuotaRetry(): Promise<void> {
+  try {
+    await runRace();
+  } catch (e: unknown) {
+    const msg = String(e);
+    const isQuota =
+      (e instanceof DOMException && e.name === "QuotaExceededError") ||
+      /quota/i.test(msg);
+    if (!isQuota) throw e;
+    log("[race] Browser storage quota exceeded — clearing model cache + reloading…");
+    await clearAllModelCache();
+    setTimeout(() => window.location.reload(), 600);
+  }
+}
+
 window.addEventListener("DOMContentLoaded", async () => {
   log("Initializing Spectra demo…");
   if (!("gpu" in navigator)) {
@@ -685,8 +739,16 @@ window.addEventListener("DOMContentLoaded", async () => {
   $("run-stock").addEventListener("click", () => runStock().catch((e) => log(`ERROR: ${e}`)));
   $("run-spectra").addEventListener("click", () => runSpectra().catch((e) => log(`ERROR: ${e}`)));
   $("run-spec").addEventListener("click", () => runSpec().catch((e) => log(`ERROR: ${e}`)));
-  $("run-race").addEventListener("click", () => runRace().catch((e) => log(`ERROR: ${e}`)));
+  $("run-race").addEventListener("click", () => runRaceWithQuotaRetry().catch((e) => log(`ERROR: ${e}`)));
   $("run-eagle3").addEventListener("click", () => runEagle3Race().catch((e) => log(`ERROR: ${e}`)));
+  $("clear-cache").addEventListener("click", async () => {
+    const btn = $("clear-cache") as HTMLButtonElement;
+    btn.disabled = true;
+    btn.innerText = "clearing…";
+    await clearAllModelCache();
+    log("[cache] cleared all model cache + IndexedDB. Reloading page…");
+    setTimeout(() => window.location.reload(), 400);
+  });
 
   const gammaInput = $("gamma") as HTMLInputElement;
   const gammaVal = $("gamma-val");
