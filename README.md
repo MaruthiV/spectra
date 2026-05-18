@@ -3,7 +3,7 @@
 > Browser-native speculative-decoding inference for small open LLMs, running entirely in WebGPU.
 > **First public WebGPU implementation of EAGLE-3.** Qwen3-1.7B target + AngelSlim's pretrained 136M EAGLE-3 head, q4f16_1 quantized, no server round-trips.
 
-🎬 **Live demo:** _[deployment link — TBD]_
+🎬 **Live demo:** https://spectra-blush.vercel.app/
 
 ---
 
