@@ -527,10 +527,10 @@ async function ensureEagleEngine(): Promise<{
   log(`[eagle3-race] target wasm:        ${window.location.origin}/spectra-qwen3-1_7b_webgpu.wasm`);
   log(`[eagle3-race] head wasm:          ${window.location.origin}/spectra-eagle3-qwen3-1_7b_webgpu.wasm`);
   const appConfig: webllm.AppConfig = {
-    // IndexedDB cache instead of the Cache API: HF serves model weights via
-    // 307 redirect to its CDN, and Cache.add() rejects redirects. IndexedDB
-    // does its own fetch (which follows redirects) and stores bytes directly.
-    cacheBackend: "indexeddb",
+    // OPFS (Origin Private File System) backend: avoids the Cache API's
+    // refusal to follow HF 307 redirects, and gets a separate (often larger)
+    // quota allocation than IndexedDB. Falls back gracefully if unsupported.
+    cacheBackend: "opfs",
     model_list: [
       {
         model: EAGLE3_TARGET_WEIGHTS_URL,
@@ -694,6 +694,18 @@ async function clearAllModelCache(): Promise<void> {
     }
   } catch (e) {
     console.warn("[cache] IndexedDB clear failed:", e);
+  }
+  // Also nuke OPFS root contents (where the opfs cacheBackend stores weights).
+  try {
+    const root = await navigator.storage?.getDirectory?.();
+    if (root) {
+      // @ts-expect-error: values() / async iterator on FileSystemDirectoryHandle
+      for await (const entry of root.values()) {
+        await root.removeEntry(entry.name, { recursive: true });
+      }
+    }
+  } catch (e) {
+    console.warn("[cache] OPFS clear failed:", e);
   }
 }
 
