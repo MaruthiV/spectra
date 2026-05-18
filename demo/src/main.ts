@@ -527,6 +527,10 @@ async function ensureEagleEngine(): Promise<{
   log(`[eagle3-race] target wasm:        ${window.location.origin}/spectra-qwen3-1_7b_webgpu.wasm`);
   log(`[eagle3-race] head wasm:          ${window.location.origin}/spectra-eagle3-qwen3-1_7b_webgpu.wasm`);
   const appConfig: webllm.AppConfig = {
+    // IndexedDB cache instead of the Cache API: HF serves model weights via
+    // 307 redirect to its CDN, and Cache.add() rejects redirects. IndexedDB
+    // does its own fetch (which follows redirects) and stores bytes directly.
+    cacheBackend: "indexeddb",
     model_list: [
       {
         model: EAGLE3_TARGET_WEIGHTS_URL,
