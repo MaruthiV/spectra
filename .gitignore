@@ -26,6 +26,7 @@ venv/
 *.onnx
 *.gguf
 *.wasm
+!demo/public/*.wasm
 *.mlpackage
 weights/
 checkpoints/
