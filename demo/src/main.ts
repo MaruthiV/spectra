@@ -720,6 +720,22 @@ async function runRaceWithQuotaRetry(): Promise<void> {
 
 window.addEventListener("DOMContentLoaded", async () => {
   log("Initializing Spectra demo…");
+
+  // Request persistent storage. Without this, Chrome caps IndexedDB to ~1-2 GB
+  // and evicts under pressure — both Qwen2.5 + Qwen3 model sets can hit that.
+  // With persistent storage granted, the origin gets a much higher quota.
+  if (navigator.storage?.persist) {
+    try {
+      const granted = await navigator.storage.persist();
+      const est = await navigator.storage.estimate?.();
+      const quotaGB = est?.quota ? (est.quota / 1024 / 1024 / 1024).toFixed(1) : "?";
+      const usageGB = est?.usage ? (est.usage / 1024 / 1024 / 1024).toFixed(2) : "?";
+      log(`Storage: persistent=${granted}, quota=${quotaGB} GB, used=${usageGB} GB`);
+    } catch (e) {
+      log(`Storage persistence check failed (non-fatal): ${e}`);
+    }
+  }
+
   if (!("gpu" in navigator)) {
     log("ERROR: navigator.gpu is missing — WebGPU not available in this browser.");
     setBusy(true);
